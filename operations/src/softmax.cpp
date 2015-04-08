@@ -14,13 +14,13 @@ Softmax::Softmax(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
   std::tie(mode) = args;
-  CHECK_EQ(inputs_[0]->size(), outputs_[0]->size());
-  Size bottom_size = inputs_[0]->size();
-  Size top_size = outputs_[0]->size();
+  CHECK_EQ(inputs_[0]->shape(), outputs_[0]->shape());
+  Shape bottom_shape = inputs_[0]->shape();
+  Shape top_shape = outputs_[0]->shape();
   Stride bottom_stride = inputs_[0]->stride();
   Stride top_stride = outputs_[0]->stride();
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
-  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_shape, top_stride);
   if (mode == "channel") {
     softmax_mode_ = CUDNN_SOFTMAX_MODE_CHANNEL;
   } else if (mode == "instance") {
@@ -51,14 +51,14 @@ SoftmaxDown::SoftmaxDown(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
   std::tie(mode) = args;
-  CHECK_EQ(inputs_[0]->size(), outputs_[0]->size());
-  CHECK_EQ(inputs_[1]->size(), outputs_[0]->size());
-  Size bottom_size = outputs_[0]->size();
-  Size top_size = inputs_[0]->size();
+  CHECK_EQ(inputs_[0]->shape(), outputs_[0]->shape());
+  CHECK_EQ(inputs_[1]->shape(), outputs_[0]->shape());
+  Shape bottom_shape = outputs_[0]->shape();
+  Shape top_shape = inputs_[0]->shape();
   Stride bottom_stride = outputs_[0]->stride();
   Stride top_stride = inputs_[0]->stride();
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
-  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_shape, top_stride);
   if (mode == "channel") {
     softmax_mode_ = CUDNN_SOFTMAX_MODE_CHANNEL;
   } else if (mode == "instance") {
@@ -89,19 +89,19 @@ void SoftmaxDown::compute_gpu(const vector<bool>& add) {
 SoftmaxLoss::SoftmaxLoss(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
-  CHECK_EQ(outputs_[0]->size(), Size(1, 1, 1, 1));
-  CHECK_EQ(inputs_[1]->size().num(), inputs_[0]->size().num());
-  CHECK_EQ(inputs_[1]->size().height(), inputs_[0]->size().height());
-  CHECK_EQ(inputs_[1]->size().width(), inputs_[0]->size().width());
+  CHECK_EQ(outputs_[0]->shape(), Shape({1, 1, 1, 1}));
+  CHECK_EQ(inputs_[1]->shape()[0], inputs_[0]->shape()[0]);
+  CHECK_EQ(inputs_[1]->shape()[2], inputs_[0]->shape()[2]);
+  CHECK_EQ(inputs_[1]->shape()[3], inputs_[0]->shape()[3]);
 }
 
 void SoftmaxLoss::compute_cpu(const vector<bool>& add) {
   const DTYPE* softmax_data = inputs_[0]->cpu_data();
   const DTYPE* label_data = inputs_[1]->cpu_data();
-  Size softmax_size = inputs_[0]->size();
-  int num = softmax_size.num();
-  int dim = softmax_size.count() / num;
-  int spatial_dim = softmax_size.height() * softmax_size.width();
+  Shape softmax_shape = inputs_[0]->shape();
+  int num = softmax_shape[0];
+  int dim = softmax_shape.Count() / num;
+  int spatial_dim = softmax_shape[2] * softmax_shape[3];
   DTYPE loss = 0;
   for (int i = 0; i < num; ++i) {
     for (int j = 0; j < spatial_dim; j++) {
@@ -115,18 +115,18 @@ void SoftmaxLoss::compute_cpu(const vector<bool>& add) {
 SoftmaxLossDown::SoftmaxLossDown(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
-  CHECK_EQ(inputs_[0]->size(), outputs_[0]->size());
+  CHECK_EQ(inputs_[0]->shape(), outputs_[0]->shape());
 }
 
 void SoftmaxLossDown::compute_cpu(const vector<bool>& add) {
   DTYPE* bottom_diff = outputs_[0]->mutable_cpu_data();
   const DTYPE* softmax_data = inputs_[0]->cpu_data();
-  Size softmax_size = inputs_[0]->size();
-  caffe::caffe_cpu_copy(softmax_size.count(), softmax_data, bottom_diff);
+  Shape softmax_shape = inputs_[0]->shape();
+  caffe::caffe_cpu_copy(softmax_shape.Count(), softmax_data, bottom_diff);
   const DTYPE* label = inputs_[1]->cpu_data();
-  int num = softmax_size.num();
-  int dim = softmax_size.count() / num;
-  int spatial_dim = softmax_size.height() * softmax_size.width();
+  int num = softmax_shape[0];
+  int dim = softmax_shape.Count() / num;
+  int spatial_dim = softmax_shape[2] * softmax_shape[3];
   for (int i = 0; i < num; ++i) {
     for (int j = 0; j < spatial_dim; ++j) {
       bottom_diff[i * dim + static_cast<int>(label[i * spatial_dim + j])
@@ -135,7 +135,7 @@ void SoftmaxLossDown::compute_cpu(const vector<bool>& add) {
   }
   // Scale gradient
   const DTYPE loss_weight = inputs_[2]->cpu_data()[0];
-  caffe::caffe_scal(softmax_size.count(), loss_weight / num / spatial_dim,
+  caffe::caffe_scal(softmax_shape.Count(), loss_weight / num / spatial_dim,
       bottom_diff);
 }
 

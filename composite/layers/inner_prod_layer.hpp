@@ -11,7 +11,7 @@ namespace purine {
 
 class InnerProdLayer : public Layer {
  protected:
-  int num_output;
+  size_t num_output;
   string activation;
  public:
   typedef vector<Blob*> B;
@@ -26,26 +26,25 @@ class InnerProdLayer : public Layer {
   virtual void setup() override {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
-    int bottom_length = bottom_size.channels() * bottom_size.height()
-        * bottom_size.width();
-    Size expect_weight_size = { num_output, bottom_length, 1, 1 };
-    Size expect_bias_size = { 1, num_output, 1, 1 };
-    Size expect_top_size = { bottom_size.num(), num_output, 1, 1 };
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
+    size_t bottom_length = bottom_shape[1] * bottom_shape[2] * bottom_shape[3];
+    Shape expect_weight_shape = { num_output, bottom_length, 1, 1 };
+    Shape expect_bias_shape = { 1, num_output, 1, 1 };
+    Shape expect_top_shape = { bottom_shape[0], num_output, 1, 1 };
 
     // check weight
     if (weight_.size() != 0) {
       CHECK_EQ(weight_.size(), 4);
-      CHECK_EQ(weight_[0]->tensor()->size(), expect_weight_size);
-      CHECK_EQ(weight_[1]->tensor()->size(), expect_bias_size);
-      CHECK_EQ(weight_[2]->tensor()->size(), expect_weight_size);
-      CHECK_EQ(weight_[3]->tensor()->size(), expect_bias_size);
+      CHECK_EQ(weight_[0]->tensor()->shape(), expect_weight_shape);
+      CHECK_EQ(weight_[1]->tensor()->shape(), expect_bias_shape);
+      CHECK_EQ(weight_[2]->tensor()->shape(), expect_weight_shape);
+      CHECK_EQ(weight_[3]->tensor()->shape(), expect_bias_shape);
     } else {
       weight_ = {
-        create("weight", expect_weight_size),
-        create("bias", expect_bias_size),
-        create("weight_diff", expect_weight_size),
-        create("bias_diff", expect_bias_size)
+        create("weight", expect_weight_shape),
+        create("bias", expect_bias_shape),
+        create("weight_diff", expect_weight_shape),
+        create("bias_diff", expect_bias_shape)
       };
     }
 
@@ -53,12 +52,12 @@ class InnerProdLayer : public Layer {
     if (top_.size() != 0) {
       CHECK_EQ(top_.size(), 2);
       for (auto top : top_) {
-        CHECK_EQ(top->tensor()->size(), expect_top_size);
+        CHECK_EQ(top->tensor()->shape(), expect_top_shape);
       }
     } else {
       top_ = {
-        create("top", expect_top_size),
-        create("top_diff", expect_top_size)
+        create("top", expect_top_shape),
+        create("top_diff", expect_top_shape)
       };
     }
 

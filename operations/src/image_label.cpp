@@ -9,9 +9,9 @@ using caffe::Datum;
 namespace purine {
 
 static void TensorFromBlob(const BlobProto& proto, Tensor* tensor) {
-  Size s = tensor->size();
+  Shape s = tensor->shape();
   DTYPE* data_vec = tensor->mutable_cpu_data();
-  for (int i = 0; i < s.count(); ++i) {
+  for (int i = 0; i < s.Count(); ++i) {
     data_vec[i] = proto.data(i);
   }
 }
@@ -22,10 +22,10 @@ ImageLabel::ImageLabel(const vector<Tensor*>& inputs,
   std::tie(source, mean, mirror, random, color, offset, interval,
       batch_size, crop_size)
       = args;
-  CHECK_EQ(batch_size, outputs_[0]->size().num());
-  CHECK_EQ(batch_size, outputs_[1]->size().num());
-  CHECK_EQ(crop_size, outputs_[0]->size().height());
-  CHECK_EQ(crop_size, outputs_[0]->size().width());
+  CHECK_EQ(batch_size, outputs_[0]->shape()[0]);
+  CHECK_EQ(batch_size, outputs_[1]->shape()[0]);
+  CHECK_EQ(crop_size, outputs_[0]->shape()[2]);
+  CHECK_EQ(crop_size, outputs_[0]->shape()[3]);
   mean_.reset(new Tensor(current_rank(), -1,
           {1, color ? 3 : 1, crop_size, crop_size}));
   if (!(mean == "")) {
@@ -33,7 +33,7 @@ ImageLabel::ImageLabel(const vector<Tensor*>& inputs,
     ReadProtoFromBinaryFileOrDie(mean, &blob_proto);
     TensorFromBlob(blob_proto, mean_.get());
   } else {
-    caffe::caffe_memset(mean_->size().count() * sizeof(DTYPE), 0,
+    caffe::caffe_memset(mean_->shape().Count() * sizeof(DTYPE), 0,
         mean_->mutable_cpu_data());
   }
   CHECK_EQ(mdb_env_create(&mdb_env_), MDB_SUCCESS)
@@ -65,10 +65,10 @@ void ImageLabel::compute_cpu(const vector<bool>& add) {
   const DTYPE* mean = mean_->data();
   DTYPE* top_data = outputs_[0]->mutable_cpu_data();
   DTYPE* top_label = outputs_[1]->mutable_cpu_data();
-  int size = outputs_[0]->size().count() / outputs_[0]->size().num();
-  const int mean_height = mean_->size().height();
-  const int mean_width = mean_->size().width();
-  const int mean_channels = mean_->size().channels();
+  int size = outputs_[0]->shape().Count() / outputs_[0]->shape()[0];
+  const int mean_height = mean_->shape()[2];
+  const int mean_width = mean_->shape()[3];
+  const int mean_channels = mean_->shape()[1];
   // mean h_off w_off
   const int mean_h_off = (mean_height - crop_size) / 2;
   const int mean_w_off = (mean_width - crop_size) / 2;

@@ -74,7 +74,7 @@ void Layer::set_bottom(const vector<Blob*>& bottom) {
           return b;
         } else {
           Blob* tmp = parent_->create("...", rank_, device_,
-              b->tensor()->size());
+              b->tensor()->shape());
           B{ tmp } >> *parent_->createAny<Copy>("...",
               Copy::param_tuple()) >> B{ b };
           return tmp;
@@ -98,7 +98,7 @@ void Layer::set_top(const vector<Blob*>& top) {
           return b;
         } else {
           Blob* tmp = parent_->create("...", rank_, device_,
-              b->tensor()->size());
+              b->tensor()->shape());
           B{ tmp } >> *parent_->createAny<Copy>("...", Copy::param_tuple())
                           >> B{ b };
           return tmp;

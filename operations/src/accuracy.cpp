@@ -10,17 +10,17 @@ Accuracy::Accuracy(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
   std::tie(topN) = args;
-  CHECK_EQ(outputs_[0]->size(), Size(1, 1, 1, 1));
-  CHECK_EQ(inputs_[1]->size(), Size(inputs_[0]->size().num(), 1, 1, 1));
+  CHECK_EQ(outputs_[0]->shape(), Shape({1, 1, 1, 1}));
+  CHECK_EQ(inputs_[1]->shape(), Shape({inputs_[0]->shape()[0], 1, 1, 1}));
 }
 
 void Accuracy::compute_cpu(const vector<bool>& add) {
   DTYPE accuracy = 0;
   const DTYPE* bottom_data = inputs_[0]->cpu_data();
   const DTYPE* bottom_label = inputs_[1]->cpu_data();
-  Size size = inputs_[0]->size();
-  int num = size.num();
-  int dim = size.count() / size.num();
+  Shape shape = inputs_[0]->shape();
+  int num = shape[0];
+  int dim = shape.Count() / shape[0];
   vector<DTYPE> maxval(topN + 1);
   vector<int> max_id(topN + 1);
   for (int i = 0; i < num; ++i) {

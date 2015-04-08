@@ -48,7 +48,7 @@ TEST_CASE("TestCopy", "[Copy]") {
         g.run();
         REQUIRE(caffe::purine_cpu_compare(twos_cpu->tensor()->cpu_data(),
                 dest_cpu->tensor()->cpu_data(),
-                twos_cpu->tensor()->size().count()));
+                twos_cpu->tensor()->shape().Count()));
       }
       /*
        * gpu <-> gpu
@@ -79,11 +79,11 @@ TEST_CASE("TestCopy", "[Copy]") {
         fill.run();
         REQUIRE(!caffe::purine_gpu_compare(gpu1->tensor()->gpu_data(),
                 gpu2->tensor()->gpu_data(),
-                gpu1->tensor()->size().count()));
+                gpu1->tensor()->shape().Count()));
         g.run();
         REQUIRE(caffe::purine_gpu_compare(twos_gpu1->tensor()->gpu_data(),
                 twos_gpu2->tensor()->gpu_data(),
-                twos_gpu1->tensor()->size().count()));
+                twos_gpu1->tensor()->shape().Count()));
       }
       /*
        * same device
@@ -132,13 +132,13 @@ TEST_CASE("TestCopy", "[Copy]") {
         if (current_rank() == 1) {
           REQUIRE(!caffe::purine_cpu_compare(r2->tensor()->cpu_data(),
                   r3->tensor()->cpu_data(),
-                  r2->tensor()->size().count()));
+                  r2->tensor()->shape().Count()));
         }
         g.run();
         if (current_rank() == 1) {
           REQUIRE(caffe::purine_cpu_compare(r2->tensor()->cpu_data(),
                   r3->tensor()->cpu_data(),
-                  r2->tensor()->size().count()));
+                  r2->tensor()->shape().Count()));
         }
       }
       /*
@@ -189,7 +189,7 @@ TEST_CASE("TestCopy", "[Copy]") {
       for (int i = 0; i < 10; ++i) {
         REQUIRE(!caffe::purine_cpu_compare(r2s[i]->tensor()->cpu_data(),
                 r3s[i]->tensor()->cpu_data(),
-                r2s[i]->tensor()->size().count()));
+                r2s[i]->tensor()->shape().Count()));
       }
     }
     g.run();
@@ -197,7 +197,7 @@ TEST_CASE("TestCopy", "[Copy]") {
       for (int i = 0; i < 10; ++i) {
         REQUIRE(caffe::purine_cpu_compare(r2s[i]->tensor()->cpu_data(),
                 r3s[i]->tensor()->cpu_data(),
-                r2s[i]->tensor()->size().count()));
+                r2s[i]->tensor()->shape().Count()));
       }
     }
   }

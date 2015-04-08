@@ -20,10 +20,10 @@ class ImageLabel : public Operation {
   bool mirror;
   bool random;
   bool color;
-  int interval;
-  int offset;
-  int batch_size;
-  int crop_size;
+  size_t interval;
+  size_t offset;
+  size_t batch_size;
+  size_t crop_size;
 
   shared_ptr<Tensor> mean_;
   MDB_env* mdb_env_;
@@ -34,7 +34,7 @@ class ImageLabel : public Operation {
 
  public:
   typedef tuple<string, string, bool, bool, bool,
-                int, int, int, int> param_tuple;
+                size_t, size_t, size_t, size_t> param_tuple;
   explicit ImageLabel(const vector<Tensor*>& inputs,
       const vector<Tensor*>& outputs, const param_tuple& args);
   ~ImageLabel();

@@ -134,15 +134,15 @@ Runnable run;
 create nodes in the runnable.
 
 ```c++
-Blob* bottom = run.create("bottom_name", Size{128, 10, 1, 1});
-Blob* weight = run.create("weight_name", Size(16, 10, 1, 1));
+Blob* bottom = run.create("bottom_name", Shape{128, 10, 1, 1});
+Blob* weight = run.create("weight_name", Shape{16, 10, 1, 1});
 
 Op<Inner>* inner_prod = run.create<Inner>("inner_prod_name", "main", Inner::param_tuple());
 // param_tuple is typedefed in the class `Inner`. It is a typedef of tuple<...>.
 // It lists the arguments needed when constructing the operation.
 // In the case the `Inner` operation does not need any argument.
 
-Blob* top = run.create("top_name", Size(128, 16, 1, 1));
+Blob* top = run.create("top_name", Shape{128, 16, 1, 1});
 // connect them
 vector<Blob*>{ bottom, weight } >> *inner_prod >> vector<Blob*>{ top };
 

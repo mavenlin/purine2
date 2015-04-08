@@ -12,7 +12,7 @@ typedef vector<Blob*> B;
 class PoolLayer : public Layer {
  protected:
   string method;
-  int kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w;
+  size_t kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w;
   Pool::param_tuple args_;
  public:
   typedef Pool::param_tuple param_tuple;
@@ -28,24 +28,23 @@ class PoolLayer : public Layer {
   virtual void setup() override {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
-    int out_h = static_cast<int>(ceil(static_cast<float>(bottom_size.height()
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
+    size_t out_h = static_cast<int>(ceil(static_cast<float>(bottom_shape[2]
                 + 2 * pad_h - kernel_h) / stride_h)) + 1;
-    int out_w = static_cast<int>(ceil(static_cast<float>(bottom_size.width()
+    size_t out_w = static_cast<int>(ceil(static_cast<float>(bottom_shape[3]
                 + 2 * pad_w - kernel_w) / stride_w)) + 1;
-    Size expect_top_size = { bottom_size.num(), bottom_size.channels(),
-                             out_h, out_w };
+    Shape expect_top_shape = { bottom_shape[0], bottom_shape[1], out_h, out_w };
 
     // check top
     if (top_.size() != 0) {
       CHECK_EQ(top_.size(), 2);
       for (auto top : top_) {
-        CHECK_EQ(top->tensor()->size(), expect_top_size);
+        CHECK_EQ(top->tensor()->shape(), expect_top_shape);
       }
     } else {
       top_ = {
-        create("top", expect_top_size),
-        create("top_diff", expect_top_size)
+        create("top", expect_top_shape),
+        create("top_diff", expect_top_shape)
       };
     }
     // create ops

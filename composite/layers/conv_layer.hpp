@@ -12,13 +12,13 @@ namespace purine {
 
 class ConvLayer : public Layer {
  protected:
-  int pad_h;
-  int pad_w;
-  int stride_h;
-  int stride_w;
-  int kernel_h;
-  int kernel_w;
-  int num_output;
+  size_t pad_h;
+  size_t pad_w;
+  size_t stride_h;
+  size_t stride_w;
+  size_t kernel_h;
+  size_t kernel_w;
+  size_t num_output;
   string activation;
  public:
   typedef vector<Blob*> B;
@@ -34,27 +34,27 @@ class ConvLayer : public Layer {
   virtual void setup() override {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
-    Size expect_weight_size = {num_output, bottom_size.channels(),
-                               kernel_h, kernel_w};
-    Size expect_bias_size = {1, num_output, 1, 1};
-    int out_h = (bottom_size.height() + 2 * pad_h - kernel_h) / stride_h + 1;
-    int out_w = (bottom_size.width() + 2 * pad_w - kernel_w) / stride_w + 1;
-    Size expect_top_size = {bottom_size.num(), num_output, out_h, out_w};
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
+    Shape expect_weight_shape = {num_output, bottom_shape[1],
+                                 kernel_h, kernel_w};
+    Shape expect_bias_shape = {1, num_output, 1, 1};
+    size_t out_h = (bottom_shape[2] + 2 * pad_h - kernel_h) / stride_h + 1;
+    size_t out_w = (bottom_shape[3] + 2 * pad_w - kernel_w) / stride_w + 1;
+    Shape expect_top_shape = {bottom_shape[0], num_output, out_h, out_w};
 
     // check weight
     if (weight_.size() != 0) { // weight is set from outside
       CHECK_EQ(weight_.size(), 4);
-      CHECK_EQ(weight_[0]->tensor()->size(), expect_weight_size);
-      CHECK_EQ(weight_[2]->tensor()->size(), expect_weight_size);
-      CHECK_EQ(weight_[1]->tensor()->size(), expect_bias_size);
-      CHECK_EQ(weight_[3]->tensor()->size(), expect_bias_size);
+      CHECK_EQ(weight_[0]->tensor()->shape(), expect_weight_shape);
+      CHECK_EQ(weight_[2]->tensor()->shape(), expect_weight_shape);
+      CHECK_EQ(weight_[1]->tensor()->shape(), expect_bias_shape);
+      CHECK_EQ(weight_[3]->tensor()->shape(), expect_bias_shape);
     } else { // generate weight
       weight_ = {
-        create("weight", expect_weight_size),
-        create("bias", expect_bias_size),
-        create("weight_diff", expect_weight_size),
-        create("bias_diff", expect_bias_size)
+        create("weight", expect_weight_shape),
+        create("bias", expect_bias_shape),
+        create("weight_diff", expect_weight_shape),
+        create("bias_diff", expect_bias_shape)
       };
     }
 
@@ -62,12 +62,12 @@ class ConvLayer : public Layer {
     if (top_.size() != 0) {
       CHECK_EQ(top_.size(), 2);
       for (auto top : top_) {
-        CHECK_EQ(top->tensor()->size(), expect_top_size);
+        CHECK_EQ(top->tensor()->shape(), expect_top_shape);
       }
     } else {
       top_ = {
-        create("top", expect_top_size),
-        create("top_diff", expect_top_size)
+        create("top", expect_top_shape),
+        create("top_diff", expect_top_shape)
       };
     }
 

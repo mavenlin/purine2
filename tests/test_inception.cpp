@@ -33,7 +33,7 @@ TEST_CASE("TestInception", "[Inception]") {
   run.run();
   Tensor* out = cp->top()[0]->tensor();
   const DTYPE* dt = out->cpu_data();
-  REQUIRE(out->size() == Size(5, 20, 5, 5));
+  REQUIRE(out->size() == Shape{5, 20, 5, 5});
   vector<DTYPE> expected1(25, 5);
   vector<DTYPE> expected2 = { 100, 150, 150, 150, 100,
                               150, 225, 225, 225, 150,

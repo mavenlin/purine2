@@ -5,7 +5,7 @@
 #include "examples/googlenet.hpp"
 #include "composite/graph/all_reduce.hpp"
 
-int batch_size = 64;
+size_t batch_size = 64;
 string source = "/temp/imagenet-train-lmdb";
 string mean_file = "/temp/imagenet-train-mean";
 

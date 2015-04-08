@@ -34,7 +34,7 @@ class ConcatLayer : public Layer {
     // split
     top_ = {
       concat->top()[0],
-      create("top_diff", concat->top()[0]->tensor()->size())
+      create("top_diff", concat->top()[0]->tensor()->shape())
     };
     Split* split = createGraph<Split>("split", Concat::param_tuple(dim));
     top_diff() >> *split >> bottom_diff();

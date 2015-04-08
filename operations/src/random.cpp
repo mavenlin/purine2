@@ -13,7 +13,7 @@ Gaussian::Gaussian(const vector<Tensor*>& inputs,
 
 void Gaussian::compute_cpu(const vector<bool>& add) {
   for (Tensor* output : outputs_) {
-    int count = output->size().count();
+    int count = output->shape().Count();
     caffe::caffe_rng_gaussian<DTYPE>(count, mean, std,
         output->mutable_cpu_data());
   }
@@ -21,7 +21,7 @@ void Gaussian::compute_cpu(const vector<bool>& add) {
 
 void Gaussian::compute_gpu(const vector<bool>& add) {
   for (Tensor* output : outputs_) {
-    int count = output->size().count();
+    int count = output->shape().Count();
     caffe::caffe_gpu_rng_gaussian<DTYPE>(count, mean, std,
         output->mutable_gpu_data());
   }
@@ -34,7 +34,7 @@ Uniform::Uniform(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
 
 void Uniform::compute_cpu(const vector<bool>& add) {
   for (Tensor* output : outputs_) {
-    int count = output->size().count();
+    int count = output->shape().Count();
     caffe::caffe_rng_uniform<DTYPE>(count, min, max,
         output->mutable_cpu_data());
   }
@@ -42,7 +42,7 @@ void Uniform::compute_cpu(const vector<bool>& add) {
 
 void Uniform::compute_gpu(const vector<bool>& add) {
   for (Tensor* output : outputs_) {
-    int count = output->size().count();
+    int count = output->shape().Count();
     caffe::caffe_gpu_rng_uniform<DTYPE>(count, min, max,
         output->mutable_gpu_data());
   }
@@ -56,14 +56,14 @@ Constant::Constant(const vector<Tensor*>& inputs,
 
 void Constant::compute_cpu(const vector<bool>& add) {
   for (Tensor* output : outputs_) {
-    int count = output->size().count();
+    int count = output->shape().Count();
     caffe::caffe_set<DTYPE>(count, constant, output->mutable_cpu_data());
   }
 }
 
 void Constant::compute_gpu(const vector<bool>& add) {
   for (Tensor* output : outputs_) {
-    int count = output->size().count();
+    int count = output->shape().Count();
     caffe::caffe_gpu_set<DTYPE>(count, constant, output->mutable_gpu_data());
   }
 }
@@ -76,7 +76,7 @@ Bernoulli::Bernoulli(const vector<Tensor*>& inputs,
 
 void Bernoulli::compute_cpu(const vector<bool>& add) {
   for (Tensor* output : outputs_) {
-    int count = output->size().count();
+    int count = output->shape().Count();
     caffe::caffe_rng_bernoulli<DTYPE>(count, prob,
         reinterpret_cast<int*>(output->mutable_cpu_data()));
   }
@@ -84,7 +84,7 @@ void Bernoulli::compute_cpu(const vector<bool>& add) {
 
 void Bernoulli::compute_gpu(const vector<bool>& add) {
   for (Tensor* output : outputs_) {
-    int count = output->size().count();
+    int count = output->shape().Count();
     caffe::caffe_gpu_rng_bernoulli<DTYPE>(count, prob,
         output->mutable_gpu_data());
   }

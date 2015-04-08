@@ -31,7 +31,7 @@ class NINLayer : public Layer {
   virtual void setup() override {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
 
     ConvLayer* conv = createGraph<ConvLayer>("one",
         ConvLayer::param_tuple(pad_h, pad_w, stride_h, stride_w, kernel_h,

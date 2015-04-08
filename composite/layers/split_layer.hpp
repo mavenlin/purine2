@@ -16,9 +16,9 @@ const vector<Blob*>& operator >> (SplitLayer& split,
 class SplitLayer : public Layer {
  protected:
   Split::DIM dim;
-  vector<int> dims;
+  vector<size_t> dims;
  public:
-  typedef tuple<Split::DIM, vector<int> > param_tuple;
+  typedef tuple<Split::DIM, vector<size_t> > param_tuple;
   SplitLayer(int rank, int device, const param_tuple& args)
       : Layer(rank, device) {
     std::tie(dim, dims) = args;
@@ -28,14 +28,14 @@ class SplitLayer : public Layer {
   virtual void setup() override {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
     Split* split = createGraph<Split>("split", Split::param_tuple(dim), dims);
     bottom_data() >> *split;
     top_.insert(top_.end(), split->top().begin(), split->top().end());
     // concat
     // create top_diff
     for (Blob* top : split->top()) {
-      top_.push_back(create("top_diff", top->tensor()->size()));
+      top_.push_back(create("top_diff", top->tensor()->shape()));
     }
     Concat* concat = createGraph<Concat>("concat", Concat::param_tuple(dim));
     top_diff() >> *concat >> bottom_diff();

@@ -98,7 +98,7 @@ void ComputeLoss<Net>::load(const string& filename) {
   vector<Blob*> tmp(num_param);
   vector<Blob*> weights(num_param);
   for (int i = 0; i < num_param; ++i) {
-    tmp[i] = loader.create("tmp", weights_[i]->tensor()->size());
+    tmp[i] = loader.create("tmp", weights_[i]->tensor()->shape());
   }
   for (int i = 0; i < num_param; ++i) {
     weights[i] = loader.create("weight", weights_[i]->shared_tensor());
@@ -115,13 +115,13 @@ void ComputeLoss<Net>::load(const string& filename) {
 
     int total_len = 0;
     for (Blob* b : tmp) {
-      total_len += b->tensor()->size().count() * sizeof(DTYPE);
+      total_len += b->tensor()->shape().Count() * sizeof(DTYPE);
     }
     CHECK_EQ(raw.length(), total_len) <<
         "Snapshot size incompatible with network weight";
     int offset = 0;
     for (Blob* b : tmp) {
-      int len = b->tensor()->size().count() * sizeof(DTYPE);
+      int len = b->tensor()->shape().Count() * sizeof(DTYPE);
       memcpy(b->tensor()->mutable_cpu_data(), raw.c_str() + offset, len);
       offset += len;
     }

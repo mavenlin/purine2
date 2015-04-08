@@ -9,20 +9,20 @@ Conv::Conv(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
   std::tie(pad_h, pad_w, stride_h, stride_w) = args;
   CHECK_EQ(inputs_.size(), 2);
   CHECK_EQ(outputs_.size(), 1);
-  Size bottom_size = inputs_[0]->size();
+  Shape bottom_shape = inputs_[0]->shape();
   Stride bottom_stride = inputs_[0]->stride();
-  Size top_size = outputs_[0]->size();
+  Shape top_size = outputs_[0]->shape();
   Stride top_stride = outputs_[0]->stride();
-  Size kernel_size = inputs_[1]->size();
+  Shape kernel_size = inputs_[1]->shape();
 
-  CHECK_EQ(bottom_size.num(), top_size.num());
-  CHECK_EQ(bottom_size.channels(), kernel_size.channels());
-  CHECK_EQ(kernel_size.num(), top_size.channels());
-  CHECK_EQ((bottom_size.height() + 2 * pad_h - kernel_size.height())
-      / stride_h + 1, top_size.height());
-  CHECK_EQ((bottom_size.width() + 2 * pad_w - kernel_size.width())
-      / stride_w + 1, top_size.width());
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
+  CHECK_EQ(bottom_shape[0], top_size[0]);
+  CHECK_EQ(bottom_shape[1], kernel_size[1]);
+  CHECK_EQ(kernel_size[0], top_size[1]);
+  CHECK_EQ((bottom_shape[2] + 2 * pad_h - kernel_size[2])
+      / stride_h + 1, top_size[2]);
+  CHECK_EQ((bottom_shape[3] + 2 * pad_w - kernel_size[3])
+      / stride_w + 1, top_size[3]);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
   cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
   cudnn::createFilterDesc<DTYPE>(&filter_desc_, kernel_size);
   cudnn::createConvolutionDesc<DTYPE>(&conv_desc_, pad_h, pad_w, stride_h,
@@ -61,19 +61,19 @@ ConvDown::ConvDown(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs,
     const param_tuple& args) : Operation(inputs, outputs) {
   std::tie(pad_h, pad_w, stride_h, stride_w) = args;
-  Size bottom_size = outputs_[0]->size();
+  Shape bottom_shape = outputs_[0]->shape();
   Stride bottom_stride = outputs_[0]->stride();
-  Size top_size = inputs_[0]->size();
+  Shape top_size = inputs_[0]->shape();
   Stride top_stride = inputs_[0]->stride();
-  Size kernel_size = inputs_[1]->size();
-  CHECK_EQ(bottom_size.num(), top_size.num());
-  CHECK_EQ(bottom_size.channels(), kernel_size.channels());
-  CHECK_EQ(kernel_size.num(), top_size.channels());
-  CHECK_EQ((bottom_size.height() + 2 * pad_h - kernel_size.height())
-      / stride_h + 1, top_size.height());
-  CHECK_EQ((bottom_size.width() + 2 * pad_w - kernel_size.width())
-      / stride_w + 1, top_size.width());
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
+  Shape kernel_size = inputs_[1]->shape();
+  CHECK_EQ(bottom_shape[0], top_size[0]);
+  CHECK_EQ(bottom_shape[1], kernel_size[1]);
+  CHECK_EQ(kernel_size[0], top_size[1]);
+  CHECK_EQ((bottom_shape[2] + 2 * pad_h - kernel_size[2])
+      / stride_h + 1, top_size[2]);
+  CHECK_EQ((bottom_shape[3] + 2 * pad_w - kernel_size[3])
+      / stride_w + 1, top_size[3]);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
   cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
   cudnn::createFilterDesc<DTYPE>(&filter_desc_, kernel_size);
   cudnn::createConvolutionDesc<DTYPE>(&conv_desc_, pad_h, pad_w, stride_h,
@@ -102,19 +102,19 @@ ConvWeight::ConvWeight(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs,
     const param_tuple& args) : Operation(inputs, outputs) {
   std::tie(pad_h, pad_w, stride_h, stride_w) = args;
-  Size bottom_size = inputs_[1]->size();
-  Size top_size = inputs_[0]->size();
-  Size kernel_size = outputs_[0]->size();
+  Shape bottom_shape = inputs_[1]->shape();
+  Shape top_size = inputs_[0]->shape();
+  Shape kernel_size = outputs_[0]->shape();
   Stride bottom_stride = inputs_[1]->stride();
   Stride top_stride = inputs_[0]->stride();
-  CHECK_EQ(bottom_size.num(), top_size.num());
-  CHECK_EQ(bottom_size.channels(), kernel_size.channels());
-  CHECK_EQ(kernel_size.num(), top_size.channels());
-  CHECK_EQ((bottom_size.height() + 2 * pad_h - kernel_size.height())
-      / stride_h + 1, top_size.height());
-  CHECK_EQ((bottom_size.width() + 2 * pad_w - kernel_size.width())
-      / stride_w + 1, top_size.width());
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
+  CHECK_EQ(bottom_shape[0], top_size[0]);
+  CHECK_EQ(bottom_shape[1], kernel_size[1]);
+  CHECK_EQ(kernel_size[0], top_size[1]);
+  CHECK_EQ((bottom_shape[2] + 2 * pad_h - kernel_size[2])
+      / stride_h + 1, top_size[2]);
+  CHECK_EQ((bottom_shape[3] + 2 * pad_w - kernel_size[3])
+      / stride_w + 1, top_size[3]);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
   cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
   cudnn::createFilterDesc<DTYPE>(&filter_desc_, kernel_size);
   cudnn::createConvolutionDesc<DTYPE>(&conv_desc_, pad_h, pad_w, stride_h,

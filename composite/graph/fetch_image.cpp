@@ -11,7 +11,7 @@
 namespace purine {
 
 FetchImage::FetchImage(const string& source, const string& mean, bool mirror,
-    bool random, bool color, int batch_size, int crop_size,
+    bool random, bool color, size_t batch_size, size_t crop_size,
     const vector<pair<int, int> >& location) {
   map<int, vector<Blob*> > images;
   map<int, vector<Blob*> > labels;
@@ -64,10 +64,10 @@ FetchImage::FetchImage(const string& source, const string& mean, bool mirror,
 
     Split* split_image = createGraph<Split>("split_image", kv.first, -1,
         Split::param_tuple(Split::NUM),
-        vector<int>(kv.second.size(), batch_size));
+        vector<size_t>(kv.second.size(), batch_size));
     Split* split_label = createGraph<Split>("split_label", kv.first, -1,
         Split::param_tuple(Split::NUM),
-        vector<int>(kv.second.size(), batch_size));
+        vector<size_t>(kv.second.size(), batch_size));
     vector<Blob*>{ image } >> *split_image;
     vector<Blob*>{ label } >> *split_label;
 

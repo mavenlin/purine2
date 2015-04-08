@@ -6,7 +6,7 @@
 
 #include "common/common.hpp"
 #include "common/cuda.hpp"
-#include "operations/size.hpp"
+#include "operations/shape.hpp"
 
 using namespace purine;
 
@@ -23,25 +23,24 @@ template<> class dataType<double> {
 };
 
 template <typename Dtype>
-inline void createTensor4dDesc(cudnnTensorDescriptor_t* desc, Size size,
+inline void createTensor4dDesc(cudnnTensorDescriptor_t* desc, Shape shape,
     Stride stride) {
   CUDNN_CHECK(cudnnCreateTensorDescriptor(desc));
   CUDNN_CHECK(cudnnSetTensor4dDescriptorEx(*desc, dataType<Dtype>::type,
-          size.num(), size.channels(), size.height(), size.width(),
-          stride.nstride(), stride.cstride(), stride.hstride(),
-          stride.wstride()));
+          shape[0], shape[1], shape[2], shape[3], stride[0], stride[1],
+          stride[2], stride[3]));
 }
 
 template <typename Dtype>
-inline void createTensor4dDesc(cudnnTensorDescriptor_t* desc, Size size) {
-  createTensor4dDesc<Dtype>(desc, size, Stride(size));
+inline void createTensor4dDesc(cudnnTensorDescriptor_t* desc, Shape shape) {
+  createTensor4dDesc<Dtype>(desc, shape, Stride(shape));
 }
 
 template <typename Dtype>
-inline void createFilterDesc(cudnnFilterDescriptor_t* desc, Size size) {
+inline void createFilterDesc(cudnnFilterDescriptor_t* desc, Shape shape) {
   CUDNN_CHECK(cudnnCreateFilterDescriptor(desc));
   CUDNN_CHECK(cudnnSetFilter4dDescriptor(*desc, dataType<Dtype>::type,
-          size.num(), size.channels(), size.height(), size.width()));
+          shape[0], shape[1], shape[2], shape[3]));
 }
 
 template <typename Dtype>

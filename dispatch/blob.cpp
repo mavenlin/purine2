@@ -8,7 +8,7 @@ using std::deque;
 
 namespace purine {
 
-Blob::Blob(int rank, int device, const Size& s) : Node(rank, device) {
+Blob::Blob(int rank, int device, const Shape& s) : Node(rank, device) {
   tensor_.reset(new Tensor(rank, device, s));
 }
 

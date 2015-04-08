@@ -11,7 +11,7 @@ Isend::Isend(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
 }
 
 void Isend::compute_cpu(const vector<bool>& add) {
-  MPI_CHECK(MPI_Isend(inputs_[0]->cpu_data(), inputs_[0]->size().count(),
+  MPI_CHECK(MPI_Isend(inputs_[0]->cpu_data(), inputs_[0]->shape().Count(),
           MPI_FLOAT, dest, tag, MPI_COMM_WORLD, &request));
 }
 
@@ -25,7 +25,7 @@ Irecv::Irecv(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
 void Irecv::compute_cpu(const vector<bool>& add) {
   CHECK(!add[0]);
   MPI_CHECK(MPI_Irecv(outputs_[0]->mutable_cpu_data(),
-          outputs_[0]->size().count(), MPI_FLOAT, src, tag,
+          outputs_[0]->shape().Count(), MPI_FLOAT, src, tag,
           MPI_COMM_WORLD, &request));
 }
 

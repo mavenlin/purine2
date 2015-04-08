@@ -21,11 +21,11 @@ class Split : public Connectable {
   };
  protected:
   DIM dim;
-  vector<int> dims;
+  vector<size_t> dims;
  public:
   typedef tuple<DIM> param_tuple;
   Split(int rank, int device, const param_tuple& args,
-      const vector<int>& ds = {}) : Connectable(rank, device), dims(ds) {
+      const vector<size_t>& ds = {}) : Connectable(rank, device), dims(ds) {
     std::tie(dim) = args;
   }
   virtual ~Split() override {}

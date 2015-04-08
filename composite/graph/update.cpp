@@ -7,14 +7,14 @@ namespace purine {
 void Update::setup() {
   CHECK(bottom_setup_);
   CHECK_EQ(bottom_.size(), 3);
-  Size bottom_size = bottom_[0]->tensor()->size();
+  Shape bottom_shape = bottom_[0]->tensor()->shape();
   // check top
   if (top_.size() != 0) {
     CHECK_EQ(top_.size(), 2);
   } else {
     top_ = {
-      create("new_weight", bottom_size),
-      create("new_history", bottom_size)
+      create("new_weight", bottom_shape),
+      create("new_history", bottom_shape)
     };
   }
 

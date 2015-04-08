@@ -8,18 +8,18 @@ namespace purine {
 Pool::Pool(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
     const param_tuple& args) : Operation(inputs, outputs) {
   std::tie(method, kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w) = args;
-  Size bottom_size = inputs_[0]->size();
-  Size top_size = outputs_[0]->size();
+  Shape bottom_shape = inputs_[0]->shape();
+  Shape top_shape = outputs_[0]->shape();
   Stride bottom_stride = inputs_[0]->stride();
   Stride top_stride = outputs_[0]->stride();
-  CHECK_EQ(top_size.num(), bottom_size.num());
-  CHECK_EQ(top_size.channels(), bottom_size.channels());
-  CHECK_EQ(top_size.height(), static_cast<int>(ceil(static_cast<float>(
-      bottom_size.height() + 2 * pad_h - kernel_h) / stride_h)) + 1);
-  CHECK_EQ(top_size.width(), static_cast<int>(ceil(static_cast<float>(
-      bottom_size.width() + 2 * pad_w - kernel_w) / stride_w)) + 1);
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
-  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
+  CHECK_EQ(top_shape[0], bottom_shape[0]);
+  CHECK_EQ(top_shape[1], bottom_shape[1]);
+  CHECK_EQ(top_shape[2], static_cast<int>(ceil(static_cast<float>(
+      bottom_shape[2] + 2 * pad_h - kernel_h) / stride_h)) + 1);
+  CHECK_EQ(top_shape[3], static_cast<int>(ceil(static_cast<float>(
+      bottom_shape[3] + 2 * pad_w - kernel_w) / stride_w)) + 1);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_shape, top_stride);
   cudnnPoolingMode_t mode;
   if (method == "max") {
     mode = CUDNN_POOLING_MAX;
@@ -52,18 +52,18 @@ PoolDown::PoolDown(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
   std::tie(method, kernel_h, kernel_w, stride_h, stride_w, pad_h, pad_w) = args;
-  Size bottom_size = outputs_[0]->size();
-  Size top_size = inputs_[0]->size();
-  CHECK_EQ(top_size.num(), bottom_size.num());
-  CHECK_EQ(top_size.channels(), bottom_size.channels());
-  CHECK_EQ(top_size.height(), static_cast<int>(ceil(static_cast<float>(
-      bottom_size.height() + 2 * pad_h - kernel_h) / stride_h)) + 1);
-  CHECK_EQ(top_size.width(), static_cast<int>(ceil(static_cast<float>(
-      bottom_size.width() + 2 * pad_w - kernel_w) / stride_w)) + 1);
+  Shape bottom_shape = outputs_[0]->shape();
+  Shape top_shape = inputs_[0]->shape();
+  CHECK_EQ(top_shape[0], bottom_shape[0]);
+  CHECK_EQ(top_shape[1], bottom_shape[1]);
+  CHECK_EQ(top_shape[2], static_cast<int>(ceil(static_cast<float>(
+      bottom_shape[2] + 2 * pad_h - kernel_h) / stride_h)) + 1);
+  CHECK_EQ(top_shape[3], static_cast<int>(ceil(static_cast<float>(
+      bottom_shape[3] + 2 * pad_w - kernel_w) / stride_w)) + 1);
   Stride bottom_stride = outputs_[0]->stride();
   Stride top_stride = inputs_[0]->stride();
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
-  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_shape, top_stride);
   cudnnPoolingMode_t mode;
   if (method == "max") {
     mode = CUDNN_POOLING_MAX;

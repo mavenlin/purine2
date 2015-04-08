@@ -6,7 +6,7 @@ namespace purine {
 
 MemCopy::MemCopy(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
     const param_tuple& args) : Operation(inputs, outputs) {
-  CHECK_EQ(inputs_[0]->size(), outputs_[0]->size());
+  CHECK_EQ(inputs_[0]->shape(), outputs_[0]->shape());
   CHECK_EQ(inputs_[0]->rank(), outputs_[0]->rank());
 }
 
@@ -14,7 +14,7 @@ void MemCopy::compute_cpu(const vector<bool>& add) {
   if (inputs_[0]->cpu_data() == outputs_[0]->mutable_cpu_data()) {
     return;
   } else {
-    caffe::caffe_cpu_copy<DTYPE>(inputs_[0]->size().count(),
+    caffe::caffe_cpu_copy<DTYPE>(inputs_[0]->shape().Count(),
         inputs_[0]->cpu_data(), outputs_[0]->mutable_cpu_data());
   }
 }
@@ -29,7 +29,7 @@ void MemCopy::compute_gpu(const vector<bool>& add) {
       : inputs_[0]->gpu_data();;
   DTYPE* dst = outputs_[0]->device() < 0 ? outputs_[0]->mutable_cpu_data()
       : outputs_[0]->mutable_gpu_data();
-  CUDA_CHECK(cudaMemcpyAsync(dst, src, inputs_[0]->size().count()
+  CUDA_CHECK(cudaMemcpyAsync(dst, src, inputs_[0]->shape().Count()
           * sizeof(DTYPE), cudaMemcpyDefault, stream()));
 }
 

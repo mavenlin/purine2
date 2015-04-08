@@ -34,7 +34,7 @@ TEST_CASE("TestMPI", "[MPI][Thread]") {
     g.run();
     Tensor* t = dest->tensor();
     if (current_rank() == 1) {
-      for (int i = 0; i < t->size().count(); ++i) {
+      for (int i = 0; i < t->size().Count(); ++i) {
         REQUIRE(t->cpu_data()[i] == 1.);
       }
     }

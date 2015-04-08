@@ -39,21 +39,21 @@ class AllReduce : public Connectable {
     CHECK(bottom_setup_);
     int bottom_num = bottom_.size();
     CHECK_GT(bottom_.size(), 0);
-    Size bottom_size = bottom_[0]->tensor()->size();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
     // create top
     top_ = vector<Blob*>(bottom_num);
     for (int i = 0; i < bottom_num; ++i) {
       top_[i] = create("new_weight_" + to_string(i), bottom_[i]->rank(),
-          bottom_[i]->device(), bottom_[i]->tensor()->size());
+          bottom_[i]->device(), bottom_[i]->tensor()->shape());
     }
     // agg bottom
-    weight_diff_ = create("[weight_diff]", bottom_size);
+    weight_diff_ = create("[weight_diff]", bottom_shape);
     Aggregate* agg = createAny<Aggregate>("agg_diff",
         Aggregate::param_tuple(Aggregate::AVERAGE, rank_, device_));
     bottom_ >> *agg >> vector<Blob*>{ weight_diff_ };
     // create history, weight
-    weight_ = create("[weight]", bottom_size);
-    history_ = create("[history]", bottom_size);
+    weight_ = create("[weight]", bottom_shape);
+    history_ = create("[history]", bottom_shape);
     Blob* new_weight = create("[new_weight]", weight_->shared_tensor());
     Blob* new_history = create("[new_history]", history_->shared_tensor());
     updator = createGraph<Update>("updator", args_);

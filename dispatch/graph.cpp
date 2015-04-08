@@ -142,7 +142,7 @@ void Graph::prune(const vector<Node*>& to_prune) {
  * @brief create blob and add the blob to the graph
  */
 Blob* Graph::create(const string& name, int rank, int device,
-    const Size& size) {
+    const Shape& size) {
   subgraphs_.push_back(shared_ptr<Graph>(new Blob(rank, device, size)));
   Graph* g = subgraphs_.rbegin()->get();
   graph_name_[g] = name;
@@ -150,7 +150,7 @@ Blob* Graph::create(const string& name, int rank, int device,
   return static_cast<Blob*>(g);
 }
 
-Blob* Graph::create(const string& name, const Size& size) {
+Blob* Graph::create(const string& name, const Shape& size) {
   return create(name, rank_, device_, size);
 }
 
@@ -168,7 +168,7 @@ DTYPE Graph::memory_cost_cpu() {
     if (graph->subgraphs_.empty()) {
       Blob* blob = dynamic_cast<Blob*>(graph.get());
       if (blob && blob->device() < 0) {
-        ret += (blob->tensor()->size().count() *
+        ret += (blob->tensor()->shape().Count() *
             (sizeof(DTYPE) / 1024. / 1024.));
       }
     } else {
@@ -184,7 +184,7 @@ DTYPE Graph::memory_cost_gpu() {
     if (graph->subgraphs_.empty()) {
       Blob* blob = dynamic_cast<Blob*>(graph.get());
       if (blob && blob->device() >= 0) {
-        ret += (blob->tensor()->size().count() *
+        ret += (blob->tensor()->shape().Count() *
             (sizeof(DTYPE) / 1024. / 1024.));
       }
     } else {

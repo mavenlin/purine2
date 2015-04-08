@@ -18,21 +18,21 @@ class GlobalAverageLayer : public Layer {
   virtual void setup() override {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
-    int kernel_h = bottom_size.height();
-    int kernel_w = bottom_size.width();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
+    size_t kernel_h = bottom_shape[2];
+    size_t kernel_w = bottom_shape[3];
 
     // check top
     if (top_.size() != 0) {
       CHECK_EQ(top_.size(), 2);
       for (auto top : top_) {
-        CHECK_EQ(top->tensor()->size(),
-            Size(bottom_size.num(), bottom_size.channels(), 1, 1));
+        CHECK_EQ(top->tensor()->shape(),
+            Shape({ bottom_shape[0], bottom_shape[1], 1, 1 }));
       }
     } else {
       top_ = {
-        create("top", { bottom_size.num(), bottom_size.channels(), 1, 1 }),
-        create("top_diff", { bottom_size.num(), bottom_size.channels(), 1, 1 })
+        create("top", { bottom_shape[0], bottom_shape[1], 1, 1 }),
+        create("top_diff", { bottom_shape[0], bottom_shape[1], 1, 1 })
       };
     }
 

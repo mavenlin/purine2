@@ -8,7 +8,7 @@
 
 #include "common/common.hpp"
 #include "operations/tensor.hpp"
-#include "operations/size.hpp"
+#include "operations/shape.hpp"
 
 using std::tuple;
 using std::vector;

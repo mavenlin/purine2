@@ -47,11 +47,11 @@ class PurineConv : public Runnable {
   Blob* bottom_diff_;
  public:
   PurineConv(int rank, int device, int kernel_size, int num_output, int pad,
-      int stride, int group, Size bottom_size) {
+      int stride, int group, Shape bottom_shape) {
     conv = createGraph<ConvLayer>("conv", ConvLayer::param_tuple(pad, pad,
             stride, stride, kernel_size, kernel_size, num_output, ""));
-    bottom_ = create("bottom", bottom_size);
-    bottom_diff_ = create("bottom_diff", bottom_size);
+    bottom_ = create("bottom", bottom_shape);
+    bottom_diff_ = create("bottom_diff", bottom_shape);
     B{ bottom_, bottom_diff_ } >> *conv;
     conv->top();
   }
@@ -73,7 +73,7 @@ class CaffeConv {
   shared_ptr<caffe::ConvolutionLayer<DTYPE> > caffe_conv;
  public:
   CaffeConv(int kernel_size, int num_output, int pad, int stride, int group,
-      Size bottom_size, bool GPU = true) {
+      Shape bottom_shape, bool GPU = true) {
     if (GPU) {
       caffe::Caffe::set_mode(caffe::Caffe::GPU);
     } else {
@@ -88,8 +88,8 @@ class CaffeConv {
     convolution_param->set_pad(pad);
     convolution_param->set_group(group);
 
-    caffe_bottom.reset(new caffe::Blob<DTYPE>(bottom_size.num(),
-            bottom_size.channels(), bottom_size.height(), bottom_size.width()));
+    caffe_bottom.reset(new caffe::Blob<DTYPE>(bottom_shape[0],
+            bottom_shape[1], bottom_shape[2], bottom_shape[3]));
     caffe_top.reset(new caffe::Blob<DTYPE>());
 
     vector<caffe::Blob<DTYPE>*> bottom_vec = { caffe_bottom.get() };
@@ -135,42 +135,42 @@ TEST_CASE("TestConvolution", "[Convolution]") {
       conv.run();
 
       CaffeConv caffe_conv(5, 10, 2, 1, 1, {1, 3, 10, 10}, true);
-      caffe::caffe_gpu_copy(caffe_conv.bottom()->count(),
+      caffe::caffe_gpu_copy(caffe_conv.bottom()->Count(),
           conv.bottom()->tensor()->gpu_data(),
           caffe_conv.bottom()->mutable_gpu_data());
-      caffe::caffe_gpu_copy(caffe_conv.top()->count(),
+      caffe::caffe_gpu_copy(caffe_conv.top()->Count(),
           conv.top_diff()->tensor()->gpu_data(),
           caffe_conv.top()->mutable_gpu_diff());
-      caffe::caffe_gpu_copy(caffe_conv.weight()->count(),
+      caffe::caffe_gpu_copy(caffe_conv.weight()->Count(),
           conv.weight()->tensor()->gpu_data(),
           caffe_conv.weight()->mutable_gpu_data());
-      caffe::caffe_gpu_copy(caffe_conv.bias()->count(),
+      caffe::caffe_gpu_copy(caffe_conv.bias()->Count(),
           conv.bias()->tensor()->gpu_data(),
           caffe_conv.bias()->mutable_gpu_data());
       caffe_conv.run();
 
       // check the inputs match
       REQUIRE(caffe::purine_gpu_compare(conv.top_diff()->tensor()->gpu_data(),
-              caffe_conv.top()->gpu_diff(), caffe_conv.top()->count()));
+              caffe_conv.top()->gpu_diff(), caffe_conv.top()->Count()));
       REQUIRE(caffe::purine_gpu_compare(conv.bottom()->tensor()->gpu_data(),
-              caffe_conv.bottom()->gpu_data(), caffe_conv.bottom()->count()));
+              caffe_conv.bottom()->gpu_data(), caffe_conv.bottom()->Count()));
       REQUIRE(caffe::purine_gpu_compare(conv.weight()->tensor()->gpu_data(),
               caffe_conv.weight()->gpu_data(),
-              caffe_conv.weight()->count()));
+              caffe_conv.weight()->Count()));
       REQUIRE(caffe::purine_gpu_compare(conv.bias()->tensor()->gpu_data(),
               caffe_conv.bias()->gpu_data(),
-              caffe_conv.bias()->count()));
+              caffe_conv.bias()->Count()));
       // check results
       require_near_gpu(conv.top()->tensor()->gpu_data(),
           caffe_conv.top()->gpu_data(),
-          caffe_conv.top()->count(), 1e-5);
+          caffe_conv.top()->Count(), 1e-5);
       require_near_gpu(conv.bottom_diff()->tensor()->gpu_data(),
           caffe_conv.bottom()->gpu_diff(),
-          caffe_conv.bottom()->count(), 1e-5);
+          caffe_conv.bottom()->Count(), 1e-5);
       require_near_gpu(conv.weight_diff()->tensor()->gpu_data(),
-          caffe_conv.weight()->gpu_diff(), caffe_conv.weight()->count(), 1e-5);
+          caffe_conv.weight()->gpu_diff(), caffe_conv.weight()->Count(), 1e-5);
       require_near_gpu(conv.bias_diff()->tensor()->gpu_data(),
-          caffe_conv.bias()->gpu_diff(), caffe_conv.bias()->count(), 1e-5);
+          caffe_conv.bias()->gpu_diff(), caffe_conv.bias()->Count(), 1e-5);
     }
 
     SECTION("Multi Group") {
@@ -180,42 +180,42 @@ TEST_CASE("TestConvolution", "[Convolution]") {
       conv.run();
 
       CaffeConv caffe_conv(5, 10, 2, 1, 1, {1, 3, 10, 10}, true);
-      caffe::caffe_gpu_copy(caffe_conv.bottom()->count(),
+      caffe::caffe_gpu_copy(caffe_conv.bottom()->Count(),
           conv.bottom()->tensor()->gpu_data(),
           caffe_conv.bottom()->mutable_gpu_data());
-      caffe::caffe_gpu_copy(caffe_conv.top()->count(),
+      caffe::caffe_gpu_copy(caffe_conv.top()->Count(),
           conv.top_diff()->tensor()->gpu_data(),
           caffe_conv.top()->mutable_gpu_diff());
-      caffe::caffe_gpu_copy(caffe_conv.weight()->count(),
+      caffe::caffe_gpu_copy(caffe_conv.weight()->Count(),
           conv.weight()->tensor()->gpu_data(),
           caffe_conv.weight()->mutable_gpu_data());
-      caffe::caffe_gpu_copy(caffe_conv.bias()->count(),
+      caffe::caffe_gpu_copy(caffe_conv.bias()->Count(),
           conv.bias()->tensor()->gpu_data(),
           caffe_conv.bias()->mutable_gpu_data());
       caffe_conv.run();
 
       // check the inputs match
       REQUIRE(caffe::purine_gpu_compare(conv.top_diff()->tensor()->gpu_data(),
-              caffe_conv.top()->gpu_diff(), caffe_conv.top()->count()));
+              caffe_conv.top()->gpu_diff(), caffe_conv.top()->Count()));
       REQUIRE(caffe::purine_gpu_compare(conv.bottom()->tensor()->gpu_data(),
-              caffe_conv.bottom()->gpu_data(), caffe_conv.bottom()->count()));
+              caffe_conv.bottom()->gpu_data(), caffe_conv.bottom()->Count()));
       REQUIRE(caffe::purine_gpu_compare(conv.weight()->tensor()->gpu_data(),
               caffe_conv.weight()->gpu_data(),
-              caffe_conv.weight()->count()));
+              caffe_conv.weight()->Count()));
       REQUIRE(caffe::purine_gpu_compare(conv.bias()->tensor()->gpu_data(),
               caffe_conv.bias()->gpu_data(),
-              caffe_conv.bias()->count()));
+              caffe_conv.bias()->Count()));
       // check results
       require_near_gpu(conv.top()->tensor()->gpu_data(),
           caffe_conv.top()->gpu_data(),
-          caffe_conv.top()->count(), 1e-5);
+          caffe_conv.top()->Count(), 1e-5);
       require_near_gpu(conv.bottom_diff()->tensor()->gpu_data(),
           caffe_conv.bottom()->gpu_diff(),
-          caffe_conv.bottom()->count(), 1e-5);
+          caffe_conv.bottom()->Count(), 1e-5);
       require_near_gpu(conv.weight_diff()->tensor()->gpu_data(),
-          caffe_conv.weight()->gpu_diff(), caffe_conv.weight()->count(), 1e-5);
+          caffe_conv.weight()->gpu_diff(), caffe_conv.weight()->Count(), 1e-5);
       require_near_gpu(conv.bias_diff()->tensor()->gpu_data(),
-          caffe_conv.bias()->gpu_diff(), caffe_conv.bias()->count(), 1e-5);
+          caffe_conv.bias()->gpu_diff(), caffe_conv.bias()->Count(), 1e-5);
     }
   }
 
@@ -241,7 +241,7 @@ TEST_CASE("TestInnerProduct", "[InnerProduct]") {
 
   *test_inner.create<Gaussian>("init", "main", make_tuple(0., 1.))
       >> B{ top_diff, weight, bottom, bias};
-  Blob* top_cpu = test_inner.create("cpu_top", 0, -1, top->tensor()->size());
+  Blob* top_cpu = test_inner.create("cpu_top", 0, -1, top->tensor()->shape());
   B{ top } >> *test_inner.createAny<Copy>("...", Copy::param_tuple())
                   >> B{ top_cpu };
   test_inner.run();
@@ -260,18 +260,18 @@ TEST_CASE("TestInnerProduct", "[InnerProduct]") {
   caffe_inner.SetUp(bottom_vec, &top_vec);
 
   // copy data from purine blob
-  caffe::caffe_gpu_copy(caffe_bottom.count(), bottom->tensor()->gpu_data(),
+  caffe::caffe_gpu_copy(caffe_bottom.Count(), bottom->tensor()->gpu_data(),
       caffe_bottom.mutable_gpu_data());
-  caffe::caffe_gpu_copy(caffe_top.count(), top_diff->tensor()->gpu_data(),
+  caffe::caffe_gpu_copy(caffe_top.Count(), top_diff->tensor()->gpu_data(),
       caffe_top.mutable_gpu_diff());
-  caffe::caffe_gpu_copy(caffe_inner.blobs()[0]->count(),
+  caffe::caffe_gpu_copy(caffe_inner.blobs()[0]->Count(),
       weight->tensor()->gpu_data(), caffe_inner.blobs()[0]->mutable_gpu_data());
-  caffe::caffe_gpu_copy(caffe_inner.blobs()[1]->count(),
+  caffe::caffe_gpu_copy(caffe_inner.blobs()[1]->Count(),
       bias->tensor()->gpu_data(), caffe_inner.blobs()[1]->mutable_gpu_data());
 
   caffe_inner.Forward(bottom_vec, &top_vec);
   caffe_inner.Backward(top_vec, { true }, &bottom_vec);
 
   require_near_cpu(top_cpu->tensor()->cpu_data(), caffe_top.cpu_data(),
-      caffe_top.count(), 0.0001);
+      caffe_top.Count(), 0.0001);
 }

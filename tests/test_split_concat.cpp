@@ -19,16 +19,16 @@ TEST_CASE("TestConcat", "[Concat]") {
   vector<Blob*>{ data, data1, data2, data_diff, data1_diff, data2_diff }
   >> *concat;
   vector<Blob*> top = concat->top();
-  REQUIRE(top[0]->tensor()->size() == Size(32, 96, 32, 32));
-  REQUIRE(top[1]->tensor()->size() == Size(32, 96, 32, 32));
-  REQUIRE(top[0]->tensor()->stride() == Stride(98304, 1024, 32, 1));
-  REQUIRE(top[1]->tensor()->stride() == Stride(98304, 1024, 32, 1));
-  REQUIRE(data->tensor()->stride() == Stride(98304, 1024, 32, 1));
-  REQUIRE(data1->tensor()->stride() == Stride(98304, 1024, 32, 1));
-  REQUIRE(data2->tensor()->stride() == Stride(98304, 1024, 32, 1));
-  REQUIRE(data_diff->tensor()->stride() == Stride(98304, 1024, 32, 1));
-  REQUIRE(data1_diff->tensor()->stride() == Stride(98304, 1024, 32, 1));
-  REQUIRE(data2_diff->tensor()->stride() == Stride(98304, 1024, 32, 1));
+  REQUIRE(top[0]->tensor()->shape() == Shape{32, 96, 32, 32});
+  REQUIRE(top[1]->tensor()->shape() == Shape{32, 96, 32, 32});
+  REQUIRE(top[0]->tensor()->stride() == Stride{98304, 1024, 32, 1});
+  REQUIRE(top[1]->tensor()->stride() == Stride{98304, 1024, 32, 1});
+  REQUIRE(data->tensor()->stride() == Stride{98304, 1024, 32, 1});
+  REQUIRE(data1->tensor()->stride() == Stride{98304, 1024, 32, 1});
+  REQUIRE(data2->tensor()->stride() == Stride{98304, 1024, 32, 1});
+  REQUIRE(data_diff->tensor()->stride() == Stride{98304, 1024, 32, 1});
+  REQUIRE(data1_diff->tensor()->stride() == Stride{98304, 1024, 32, 1});
+  REQUIRE(data2_diff->tensor()->stride() == Stride{98304, 1024, 32, 1});
   REQUIRE(data->tensor()->gpu_data() == top[0]->tensor()->gpu_data());
   REQUIRE(data1->tensor()->gpu_data() == top[0]->tensor()->gpu_data()
       + 1024 * 32);
@@ -49,10 +49,10 @@ TEST_CASE("TestSplit", "[Split]") {
       SplitLayer::param_tuple(Split::CHANNELS, {32, 32, 32}));
   vector<Blob*>{ data, data_diff } >> *split;
   vector<Blob*> out = split->top();
-  REQUIRE(data->tensor()->size() == Size(32, 96, 32, 32));
-  REQUIRE(data_diff->tensor()->size() == Size(32, 96, 32, 32));
-  REQUIRE(data->tensor()->stride() == Stride(98304, 1024, 32, 1));
-  REQUIRE(data_diff->tensor()->stride() == Stride(98304, 1024, 32, 1));
+  REQUIRE(data->tensor()->shape() == Shape{32, 96, 32, 32});
+  REQUIRE(data_diff->tensor()->shape() == Shape{32, 96, 32, 32});
+  REQUIRE(data->tensor()->stride() == Stride{98304, 1024, 32, 1});
+  REQUIRE(data_diff->tensor()->stride() == Stride{98304, 1024, 32, 1});
 
   for (int i = 0; i < 6; ++i) {
     REQUIRE(out[i]->tensor()->stride() == Stride(98304, 1024, 32, 1));

@@ -25,19 +25,19 @@ class DropoutLayer : public Layer {
   virtual void setup() override {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
 
     // check top
     if (top_.size() != 0) {
       CHECK_EQ(top_.size(), 2);
       for (auto top : top_) {
-        CHECK_EQ(top->tensor()->size(), bottom_size);
+        CHECK_EQ(top->tensor()->shape(), bottom_shape);
       }
     } else {
       if (!inplace) {
         top_ = {
-          create("top", bottom_size),
-          create("top_diff", bottom_size)
+          create("top", bottom_shape),
+          create("top_diff", bottom_shape)
         };
       } else {
         top_ = {
@@ -50,7 +50,7 @@ class DropoutLayer : public Layer {
       // create ops
       Op<Bernoulli>* mask_generator = create<Bernoulli>("mask_gen", "main",
           make_tuple(1. - ratio)); // the thread can be other than main
-      Blob* mask = create("mask", bottom_size);
+      Blob* mask = create("mask", bottom_shape);
       *mask_generator >> B{ mask };
 
       Op<Mul>* mul = create<Mul>("mul", "main", tuple<>());

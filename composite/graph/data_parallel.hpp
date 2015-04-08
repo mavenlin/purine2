@@ -83,16 +83,16 @@ void DataParallel<Net, PS>::print_weight_info() {
       // shared_ptr<Tensor> h = param_server_->element(i)->weight_diff();
       DTYPE h_abs_sum = 0;
       const DTYPE* data = h->cpu_data();
-      for (int j = 0; j < h->size().count(); ++j) {
+      for (int j = 0; j < h->shape().Count(); ++j) {
         h_abs_sum += abs(data[j]);
       }
-      h_abs_sum /= h->size().count();
+      h_abs_sum /= h->shape().Count();
       DTYPE w_abs_sum = 0;
       data = w->cpu_data();
-      for (int j = 0; j < w->size().count(); ++j) {
+      for (int j = 0; j < w->shape().Count(); ++j) {
         w_abs_sum += abs(data[j]);
       }
-      w_abs_sum /= w->size().count();
+      w_abs_sum /= w->shape().Count();
 
       const string& name = weight[i]->cached_name();
       size_t pos = name.find("::");
@@ -113,7 +113,7 @@ void DataParallel<Net, PS>::init(vector<int> index,
   vector<vector<Blob*> > weights(nets_.size() + 1);
   for (int i = 0; i < index.size(); ++i) {
     tmp[i] = initializer.create("tmp",
-        param_server_->element(index[i])->weight()->size());
+        param_server_->element(index[i])->weight()->shape());
   }
   for (int i = 0; i < nets_.size(); ++i) {
     weights[i] = vector<Blob*>(index.size());
@@ -143,7 +143,7 @@ void DataParallel<Net, PS>::load(const string& filename) {
   vector<vector<Blob*> > weights(nets_.size() + 1);
   for (int i = 0; i < param_server_->size(); ++i) {
     tmp[i] = loader.create("tmp",
-        param_server_->element(i)->weight()->size());
+        param_server_->element(i)->weight()->shape());
   }
   for (int i = 0; i < nets_.size(); ++i) {
     weights[i] = vector<Blob*>(param_server_->size());
@@ -173,13 +173,13 @@ void DataParallel<Net, PS>::load(const string& filename) {
 
     int total_len = 0;
     for (Blob* b : tmp) {
-      total_len += b->tensor()->size().count() * sizeof(DTYPE);
+      total_len += b->tensor()->shape().Count() * sizeof(DTYPE);
     }
     CHECK_EQ(raw.length(), total_len) <<
         "Snapshot size incompatible with network weight";
     int offset = 0;
     for (Blob* b : tmp) {
-      int len = b->tensor()->size().count() * sizeof(DTYPE);
+      int len = b->tensor()->shape().Count() * sizeof(DTYPE);
       memcpy(b->tensor()->mutable_cpu_data(), raw.c_str() + offset, len);
       offset += len;
     }
@@ -208,7 +208,7 @@ void DataParallel<Net, PS>::save(const string& filename) {
     for (int i = 0; i < param_num; ++i) {
       const char* data = reinterpret_cast<const char*>(
           copied[i]->tensor()->cpu_data());
-      int len = copied[i]->tensor()->size().count() * sizeof(DTYPE);
+      int len = copied[i]->tensor()->shape().Count() * sizeof(DTYPE);
       out.write(data, len);
     }
     LOG(INFO) << "Saving snapshot " << filename;
@@ -272,8 +272,8 @@ void DataParallel<Net, PS>::sync() {
   for (int i = 0; i < nets_.size(); ++i) {
     if (nets_[i]->rank() == current_rank()) {
       for (int j = 0; j < weights_[0].size(); ++j) {
-        CHECK_EQ(new_weights_[i][j]->tensor()->size(),
-            weights_[i][j]->tensor()->size());
+        CHECK_EQ(new_weights_[i][j]->tensor()->shape(),
+            weights_[i][j]->tensor()->shape());
         CHECK_EQ(new_weights_[i][j]->rank(), weights_[i][j]->rank());
         CHECK_EQ(new_weights_[i][j]->device(), weights_[i][j]->device());
         new_weights_[i][j]->tensor()->swap_memory(weights_[i][j]->tensor());

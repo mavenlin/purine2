@@ -96,7 +96,7 @@ TEST_CASE("RunGraph", "[Graph][Thread]") {
     (*c) >> B{ bottom1, bottom2 };
     run_graph.run();
     Tensor* t = top_cpu->tensor();
-    for (int i = 0; i < t->size().count(); ++i) {
+    for (int i = 0; i < t->size().Count(); ++i) {
       REQUIRE(t->cpu_data()[i] == 2.);
     }
   }

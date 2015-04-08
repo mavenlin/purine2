@@ -28,7 +28,7 @@ class SoftmaxLossLayer : public Layer {
   virtual void setup() {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
 
     // check top, softmaxloss has no top.
     CHECK_EQ(top_.size(), 0);
@@ -53,7 +53,7 @@ class SoftmaxLossLayer : public Layer {
             Copy::param_tuple(rank_, -1))).top()[0];
 
     Blob* softmaxed_cpu = (B{ bottom_[0] } >> *softmax >>
-        B{ create("softmaxed", bottom_[0]->tensor()->size()) } >>
+        B{ create("softmaxed", bottom_[0]->tensor()->shape()) } >>
         *createAny<Copy>("softmaxed_cpu",
             Copy::param_tuple(rank_, -1))).top()[0];
 
@@ -61,7 +61,7 @@ class SoftmaxLossLayer : public Layer {
     // backward
     B{ softmaxed_cpu, label_cpu, loss_[1] } >>
         *softmaxloss_down >> B{ create("softmaxloss_diff_cpu", rank_, -1,
-              bottom_[1]->tensor()->size()) }
+              bottom_[1]->tensor()->shape()) }
         >> *createAny<Copy>("softmaxloss_diff",
             Copy::param_tuple()) >> B{ bottom_[1] };
   }

@@ -25,7 +25,7 @@ void Copy::setup() {
         device_ == bottom_[0]->device()) {
       top_[0] = bottom_[0];
     } else {
-      top_[0] = create("dest", rank_, device_, bottom_[0]->tensor()->size());
+      top_[0] = create("dest", rank_, device_, bottom_[0]->tensor()->shape());
     }
   }
   // setup internal routes
@@ -49,7 +49,7 @@ void Copy::setup() {
       src = bottom_[0];
     } else {
       src = create("src_cpu", bottom_[0]->rank(), -1,
-          bottom_[0]->tensor()->size());
+          bottom_[0]->tensor()->shape());
       B{ bottom_[0] } >> *create<MemCopy>("memcopy", "outbound",
           MemCopy::param_tuple()) >> B{ src };
     }
@@ -57,7 +57,7 @@ void Copy::setup() {
     if (top_[0]->device() < 0) {
       dest = top_[0];
     } else {
-      dest = create("dest_cpu", top_[0]->rank(), -1, top_[0]->tensor()->size());
+      dest = create("dest_cpu", top_[0]->rank(), -1, top_[0]->tensor()->shape());
       B{ dest } >> *create<MemCopy>("memcopy", "inbound",
           MemCopy::param_tuple()) >> B{ top_[0] };
     }
@@ -73,7 +73,7 @@ void Distribute::setup() {
   // check top
   if (top_.size() != 0) {
     for (Blob* t : top_) {
-      CHECK_EQ(t->tensor()->size(), bottom_[0]->tensor()->size());
+      CHECK_EQ(t->tensor()->shape(), bottom_[0]->tensor()->shape());
     }
   } else {
     top_ = vector<Blob*>(rank_device.size());
@@ -83,7 +83,7 @@ void Distribute::setup() {
         top_[i] = bottom_[0];
       } else {
         top_[i] = create("dist_dest_" + to_string(i), rank_device[i].first,
-            rank_device[i].second, bottom_[0]->tensor()->size());
+            rank_device[i].second, bottom_[0]->tensor()->shape());
       }
     }
   }
@@ -114,7 +114,7 @@ void Distribute::setup() {
   for (auto kv : blobs) {
     if (routes.count(kv.first) == 0) {
       routes[kv.first] = create("route", kv.first, -1,
-          bottom_[0]->tensor()->size());
+          bottom_[0]->tensor()->shape());
       bottom_ >> *createAny<Copy>("dist_to_router", Copy::param_tuple())
       >> vector<Blob*>{ routes[kv.first] };
     }
@@ -138,11 +138,11 @@ void Aggregate::setup() {
   if (top_.size() != 0) {
     CHECK_EQ(top_.size(), 1);
     for (Blob* b : bottom_) {
-      CHECK_EQ(b->tensor()->size(), top_[0]->tensor()->size());
+      CHECK_EQ(b->tensor()->shape(), top_[0]->tensor()->shape());
     }
   } else {
     top_ = {
-      create("top", rank_, device_, bottom_[0]->tensor()->size())
+      create("top", rank_, device_, bottom_[0]->tensor()->shape())
     };
   }
 

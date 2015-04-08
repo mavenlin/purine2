@@ -16,7 +16,7 @@ class FetchImage : public Runnable {
   vector<Blob*> labels_;
  public:
   FetchImage(const string& source, const string& mean,
-      bool mirror, bool random, bool color, int batch_size, int crop_size,
+      bool mirror, bool random, bool color, size_t batch_size, size_t crop_size,
       const vector<pair<int, int> >& location);
   virtual ~FetchImage() override {}
   const vector<Blob*>& images() { return images_; }

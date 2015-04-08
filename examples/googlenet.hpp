@@ -6,7 +6,7 @@
 #include "dispatch/runnable.hpp"
 #include "composite/composite.hpp"
 
-extern int batch_size;
+extern size_t batch_size;
 extern string source;
 extern string mean_file;
 

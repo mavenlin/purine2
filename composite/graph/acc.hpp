@@ -29,7 +29,7 @@ class Acc : public Connectable {
   virtual void setup() {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 1);
-    Size bottom_size = bottom_[0]->tensor()->size();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
 
     // check top, softmaxloss has no top.
     CHECK_EQ(top_.size(), 0);

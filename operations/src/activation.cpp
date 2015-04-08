@@ -7,13 +7,13 @@ Activation::Activation(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
   std::tie(mode_) = args;
-  CHECK_EQ(inputs_[0]->size(), outputs_[0]->size());
-  Size bottom_size = inputs_[0]->size();
+  CHECK_EQ(inputs_[0]->shape(), outputs_[0]->shape());
+  Shape bottom_shape = inputs_[0]->shape();
   Stride bottom_stride = inputs_[0]->stride();
-  Size top_size = outputs_[0]->size();
+  Shape top_shape = outputs_[0]->shape();
   Stride top_stride = outputs_[0]->stride();
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
-  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_shape, top_stride);
   if (mode_ == "relu") {
     activation_mode_ = CUDNN_ACTIVATION_RELU;
   } else if (mode_ == "sigmoid") {
@@ -42,13 +42,13 @@ ActivationDown::ActivationDown(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
   std::tie(mode_) = args;
-  CHECK_EQ(inputs_[0]->size(), outputs_[0]->size());
-  Size bottom_size = outputs_[0]->size();
+  CHECK_EQ(inputs_[0]->shape(), outputs_[0]->shape());
+  Shape bottom_shape = outputs_[0]->shape();
   Stride bottom_stride = outputs_[0]->stride();
-  Size top_size = inputs_[0]->size();
+  Shape top_shape = inputs_[0]->shape();
   Stride top_stride = inputs_[0]->stride();
-  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_size, bottom_stride);
-  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_size, top_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&bottom_desc_, bottom_shape, bottom_stride);
+  cudnn::createTensor4dDesc<DTYPE>(&top_desc_, top_shape, top_stride);
   if (mode_ == "relu") {
     activation_mode_ = CUDNN_ACTIVATION_RELU;
   } else if (mode_ == "sigmoid") {

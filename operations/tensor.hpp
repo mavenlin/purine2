@@ -5,7 +5,7 @@
 
 #include "common/common.hpp"
 #include "common/cuda.hpp"
-#include "operations/size.hpp"
+#include "operations/shape.hpp"
 
 using std::shared_ptr;
 
@@ -19,12 +19,12 @@ class Tensor {
 // #endif
 
  public:
-  explicit Tensor(int rank, int device, const Size& size,
+  explicit Tensor(int rank, int device, const Shape& shape,
       const Offset& offset, const Stride& stride);
-  explicit Tensor(int rank, int device, const Size& size);
+  explicit Tensor(int rank, int device, const Shape& shape);
   virtual ~Tensor();
 
-  inline const Size& size() const { return size_; }
+  inline const Shape& shape() const { return shape_; }
   inline const Stride& stride() const { return stride_; }
   inline const Offset& offset() const { return offset_; }
   inline int rank() const { return rank_; }
@@ -32,7 +32,7 @@ class Tensor {
 
   void swap_memory(Tensor* other);
   void share_from(Tensor* other);
-  void slice_from(Tensor* other, const Offset& off, const Size& size);
+  void slice_from(Tensor* other, const Offset& off, const Shape& shape);
   void delete_data();
 
   inline DTYPE* mutable_gpu_data() {
@@ -57,7 +57,7 @@ class Tensor {
   bool is_contiguous() const;
 
  protected:
-  Size size_;
+  Shape shape_;
   Offset offset_;
   Stride stride_;
   shared_ptr<DTYPE> data_;
@@ -65,7 +65,7 @@ class Tensor {
   int device_;
   // static
   static int offset(const Offset& off, const Stride& stride);
-  static void alloc_mem(DTYPE** data, const Size& size, int rank, int device);
+  static void alloc_mem(DTYPE** data, const Shape& shape, int rank, int device);
   static void free_mem(DTYPE* data, int rank, int device);
 };
 

@@ -7,52 +7,52 @@ namespace purine {
 void Concat::setup() {
   CHECK(bottom_setup_);
   CHECK_GT(bottom_.size(), 1);
-  // check bottom size
-  Size s = bottom_[0]->tensor()->size();
-  Size expected_top_size;
-  int sum = 0;
+  // check bottom shape
+  Shape s = bottom_[0]->tensor()->shape();
+  Shape expected_top_shape;
+  size_t sum = 0;
   if (dim == Split::DIM::NUM) {
     for (Blob* b : bottom_) {
-      CHECK_EQ(b->tensor()->size().channels(), s.channels());
-      CHECK_EQ(b->tensor()->size().height(), s.height());
-      CHECK_EQ(b->tensor()->size().width(), s.width());
-      sum += b->tensor()->size().num();
+      CHECK_EQ(b->tensor()->shape()[1], s[1]);
+      CHECK_EQ(b->tensor()->shape()[2], s[2]);
+      CHECK_EQ(b->tensor()->shape()[3], s[3]);
+      sum += b->tensor()->shape()[0];
     }
-    expected_top_size = { sum, s.channels(), s.height(), s.width() };
+    expected_top_shape = { sum, s[1], s[2], s[3] };
   } else {
     for (Blob* b : bottom_) {
-      CHECK_EQ(b->tensor()->size().num(), s.num());
-      CHECK_EQ(b->tensor()->size().height(), s.height());
-      CHECK_EQ(b->tensor()->size().width(), s.width());
-      sum += b->tensor()->size().channels();
+      CHECK_EQ(b->tensor()->shape()[0], s[0]);
+      CHECK_EQ(b->tensor()->shape()[2], s[2]);
+      CHECK_EQ(b->tensor()->shape()[3], s[3]);
+      sum += b->tensor()->shape()[1];
     }
-    expected_top_size = { s.num(), sum, s.height(), s.width() };
+    expected_top_shape = { s[0], sum, s[2], s[3] };
   }
 
   // check top
   if (top_.size() != 0) {
-    CHECK_EQ(expected_top_size, top_[0]->tensor()->size());
+    CHECK_EQ(expected_top_shape, top_[0]->tensor()->shape());
   } else {
     top_ = {
-      create("top", expected_top_size)
+      create("top", expected_top_shape)
     };
   }
 
   if (current_rank() == rank_) {
     top_[0]->tensor()->mutable_data();
     // create sliced blobs from top
-    int off = 0;
+    size_t off = 0;
     if (dim == Split::DIM::NUM) {
       for (int i = 0; i < bottom_.size(); ++i) {
         bottom_[i]->tensor()->slice_from(top_[0]->tensor(), { off, 0, 0, 0},
-            bottom_[i]->tensor()->size());
-        off += bottom_[i]->tensor()->size().num();
+            bottom_[i]->tensor()->shape());
+        off += bottom_[i]->tensor()->shape()[0];
       }
     } else {
       for (int i = 0; i < bottom_.size(); ++i) {
         bottom_[i]->tensor()->slice_from(top_[0]->tensor(), { 0, off, 0, 0},
-            bottom_[i]->tensor()->size());
-        off += bottom_[i]->tensor()->size().channels();
+            bottom_[i]->tensor()->shape());
+        off += bottom_[i]->tensor()->shape()[1];
       }
     }
   }

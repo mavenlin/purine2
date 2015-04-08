@@ -35,7 +35,7 @@ class InceptionLayer : public Layer {
   virtual void setup() override {
     CHECK(bottom_setup_);
     CHECK_EQ(bottom_.size(), 2);
-    Size bottom_size = bottom_[0]->tensor()->size();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
 
     ConvLayer* one_ = createGraph<ConvLayer>("one",
         ConvLayer::param_tuple(0, 0, 1, 1, 1, 1, one, ""));

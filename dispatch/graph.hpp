@@ -86,8 +86,8 @@ class Graph {
   G* createAny(const string& name, const Args&... args);
 
   // create blob
-  Blob* create(const string& name, int rank, int device, const Size& size);
-  Blob* create(const string& name, const Size& size);
+  Blob* create(const string& name, int rank, int device, const Shape& shape);
+  Blob* create(const string& name, const Shape& shape);
   Blob* create(const string& name, shared_ptr<Tensor> tensor);
   inline string cached_name() const { return cached_name_; }
 };

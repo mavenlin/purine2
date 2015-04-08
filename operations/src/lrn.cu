@@ -21,16 +21,16 @@ __global__ void LRNComputeOutput(const int nthreads, const Dtype* in,
 LRN::LRN(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
     const param_tuple& args) : Operation(inputs, outputs) {
   std::tie(alpha, beta, size) = args;
-  CHECK_EQ(outputs_[0]->size(), inputs_[0]->size());
-  CHECK_EQ(outputs_[0]->size(), inputs_[1]->size());
+  CHECK_EQ(outputs_[0]->shape(), inputs_[0]->shape());
+  CHECK_EQ(outputs_[0]->shape(), inputs_[1]->shape());
 }
 
 void LRN::compute_gpu(const vector<bool>& add) {
-  Size s = inputs_[0]->size();
+  Shape s = inputs_[0]->shape();
   const DTYPE* bottom_data = inputs_[0]->gpu_data();
   const DTYPE* scale_data = inputs_[1]->gpu_data();
   DTYPE* top_data = outputs_[0]->mutable_gpu_data();
-  int n_threads = s.count();
+  int n_threads = s.Count();
   if (add[0] == false) {
     LRNComputeOutput<DTYPE, false><<<CAFFE_GET_BLOCKS(n_threads),
         CAFFE_CUDA_NUM_THREADS, 0, stream()>>>(
@@ -94,17 +94,17 @@ LRNScale::LRNScale(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
   std::tie(alpha, beta, size) = args;
-  CHECK_EQ(outputs_[0]->size(), inputs_[0]->size());
+  CHECK_EQ(outputs_[0]->shape(), inputs_[0]->shape());
 }
 
 void LRNScale::compute_gpu(const vector<bool>& add) {
-  Size s = inputs_[0]->size();
+  Shape s = inputs_[0]->shape();
   const DTYPE* bottom_data = inputs_[0]->gpu_data();
   DTYPE* top_data = outputs_[0]->mutable_gpu_data();
-  int n_threads = s.num() * s.height() * s.width();
+  int n_threads = s[0] * s[2] * s[3];
   LRNFillScale<DTYPE><<<CAFFE_GET_BLOCKS(n_threads), CAFFE_CUDA_NUM_THREADS, 0,
       stream()>>>(
-      n_threads, bottom_data, s.num(), s.channels(), s.height(), s.width(),
+      n_threads, bottom_data, s[0], s[1], s[2], s[3],
       size, alpha / size, top_data);
   CUDA_POST_KERNEL_CHECK;
 }
@@ -199,28 +199,28 @@ LRNDown::LRNDown(const vector<Tensor*>& inputs,
     const vector<Tensor*>& outputs, const param_tuple& args)
     : Operation(inputs, outputs) {
   std::tie(alpha, beta, size) = args;
-  CHECK_EQ(outputs_[0]->size(), inputs_[0]->size());
-  CHECK_EQ(outputs_[0]->size(), inputs_[1]->size());
-  CHECK_EQ(outputs_[0]->size(), inputs_[2]->size());
-  CHECK_EQ(outputs_[0]->size(), inputs_[3]->size());
+  CHECK_EQ(outputs_[0]->shape(), inputs_[0]->shape());
+  CHECK_EQ(outputs_[0]->shape(), inputs_[1]->shape());
+  CHECK_EQ(outputs_[0]->shape(), inputs_[2]->shape());
+  CHECK_EQ(outputs_[0]->shape(), inputs_[3]->shape());
 }
 
 void LRNDown::compute_gpu(const vector<bool>& add) {
-  Size s = inputs_[0]->size();
-  int n_threads = s.num() * s.height() * s.width();
+  Shape s = inputs_[0]->shape();
+  int n_threads = s[0] * s[2] * s[3];
   if (add[0] == false) {
     LRNComputeDiff<DTYPE, false><<<CAFFE_GET_BLOCKS(n_threads),
         CAFFE_CUDA_NUM_THREADS, 0, stream()>>>(
             n_threads, inputs_[0]->gpu_data(), inputs_[3]->gpu_data(),
-            inputs_[2]->gpu_data(), inputs_[1]->gpu_data(), s.num(),
-            s.channels(), s.height(), s.width(), size, -beta,
+            inputs_[2]->gpu_data(), inputs_[1]->gpu_data(), s[0],
+            s[1], s[2], s[3], size, -beta,
             DTYPE(2. * alpha * beta / size), outputs_[0]->mutable_gpu_data());
   } else {
     LRNComputeDiff<DTYPE, true><<<CAFFE_GET_BLOCKS(n_threads),
         CAFFE_CUDA_NUM_THREADS, 0, stream()>>>(
             n_threads, inputs_[0]->gpu_data(), inputs_[3]->gpu_data(),
-            inputs_[2]->gpu_data(), inputs_[1]->gpu_data(), s.num(),
-            s.channels(), s.height(), s.width(), size, -beta,
+            inputs_[2]->gpu_data(), inputs_[1]->gpu_data(), s[0],
+            s[1], s[2], s[3], size, -beta,
             DTYPE(2. * alpha * beta / size), outputs_[0]->mutable_gpu_data());
   }
 }

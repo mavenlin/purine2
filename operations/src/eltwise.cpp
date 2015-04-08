@@ -9,16 +9,16 @@ Mul::Mul(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
     : Operation(inputs, outputs) {
   CHECK_GE(inputs_.size(), 2);
   for (Tensor* input : inputs_) {
-    CHECK_EQ(input->size(), outputs_[0]->size());
+    CHECK_EQ(input->shape(), outputs_[0]->shape());
   }
 }
 
 void Mul::compute_cpu(const vector<bool>& add) {
   CHECK_EQ(add[0], false);
-  caffe::caffe_mul<DTYPE>(inputs_[0]->size().count(), inputs_[0]->cpu_data(),
+  caffe::caffe_mul<DTYPE>(inputs_[0]->shape().Count(), inputs_[0]->cpu_data(),
       inputs_[1]->cpu_data(), outputs_[0]->mutable_cpu_data());
   for (int i = 2; i < inputs_.size(); ++i) {
-    caffe::caffe_mul<DTYPE>(outputs_[0]->size().count(),
+    caffe::caffe_mul<DTYPE>(outputs_[0]->shape().Count(),
         outputs_[0]->cpu_data(), inputs_[i]->cpu_data(),
         outputs_[0]->mutable_cpu_data());
   }
@@ -26,11 +26,11 @@ void Mul::compute_cpu(const vector<bool>& add) {
 
 void Mul::compute_gpu(const vector<bool>& add) {
   CHECK_EQ(add[0], false);
-  caffe::caffe_gpu_mul<DTYPE>(inputs_[0]->size().count(),
+  caffe::caffe_gpu_mul<DTYPE>(inputs_[0]->shape().Count(),
       inputs_[0]->gpu_data(), inputs_[1]->gpu_data(),
       outputs_[0]->mutable_gpu_data());
   for (int i = 2; i < inputs_.size(); ++i) {
-    caffe::caffe_gpu_mul<DTYPE>(outputs_[0]->size().count(),
+    caffe::caffe_gpu_mul<DTYPE>(outputs_[0]->shape().Count(),
         outputs_[0]->gpu_data(), inputs_[i]->gpu_data(),
         outputs_[0]->mutable_gpu_data());
   }
@@ -41,13 +41,13 @@ Sum::Sum(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
     : Operation(inputs, outputs) {
   CHECK_GE(inputs_.size(), 2);
   for (Tensor* input : inputs_) {
-    CHECK_EQ(input->size(), outputs_[0]->size());
+    CHECK_EQ(input->shape(), outputs_[0]->shape());
   }
 }
 
 void Sum::compute_cpu(const vector<bool>& add) {
   CHECK_EQ(add[0], false);
-  int count = inputs_[0]->size().count();
+  int count = inputs_[0]->shape().Count();
   caffe::caffe_add<DTYPE>(count, inputs_[0]->cpu_data(), inputs_[1]->cpu_data(),
       outputs_[0]->mutable_cpu_data());
   for (int i = 2; i < inputs_.size(); ++i) {
@@ -58,7 +58,7 @@ void Sum::compute_cpu(const vector<bool>& add) {
 
 void Sum::compute_gpu(const vector<bool>& add) {
   CHECK_EQ(add[0], false);
-  int count = inputs_[0]->size().count();
+  int count = inputs_[0]->shape().Count();
   caffe::caffe_gpu_add<DTYPE>(count, inputs_[0]->gpu_data(),
       inputs_[1]->gpu_data(), outputs_[0]->mutable_gpu_data());
   for (int i = 2; i < inputs_.size(); ++i) {
@@ -73,14 +73,14 @@ WeightedSum::WeightedSum(const vector<Tensor*>& inputs,
   std::tie(weights_) = args;
   CHECK_GE(inputs_.size(), 2);
   for (Tensor* input : inputs_) {
-    CHECK_EQ(input->size(), outputs_[0]->size());
+    CHECK_EQ(input->shape(), outputs_[0]->shape());
   }
   CHECK_EQ(inputs_.size(), weights_.size());
 }
 
 void WeightedSum::compute_cpu(const vector<bool>& add) {
   CHECK_EQ(add[0], false);
-  int count = inputs_[0]->size().count();
+  int count = inputs_[0]->shape().Count();
   caffe::caffe_cpu_scale(count, weights_[0], inputs_[0]->cpu_data(),
       outputs_[0]->mutable_cpu_data());
   for (int i = 1; i < weights_.size(); ++i) {
@@ -91,7 +91,7 @@ void WeightedSum::compute_cpu(const vector<bool>& add) {
 
 void WeightedSum::compute_gpu(const vector<bool>& add) {
   CHECK_EQ(add[0], false);
-  int count = inputs_[0]->size().count();
+  int count = inputs_[0]->shape().Count();
   caffe::caffe_gpu_scale(count, weights_[0], inputs_[0]->gpu_data(),
       outputs_[0]->mutable_gpu_data());
   for (int i = 1; i < weights_.size(); ++i) {
@@ -104,12 +104,12 @@ Average::Average(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
     const param_tuple& args) : Operation(inputs, outputs) {
   CHECK_GE(inputs_.size(), 2);
   for (Tensor* input : inputs_) {
-    CHECK_EQ(input->size(), outputs_[0]->size());
+    CHECK_EQ(input->shape(), outputs_[0]->shape());
   }
 }
 
 void Average::compute_cpu(const vector<bool>& add) {
-  int count = inputs_[0]->size().count();
+  int count = inputs_[0]->shape().Count();
   caffe::caffe_add<DTYPE>(count, inputs_[0]->cpu_data(), inputs_[1]->cpu_data(),
       outputs_[0]->mutable_cpu_data());
   for (int i = 2; i < inputs_.size(); ++i) {
@@ -121,7 +121,7 @@ void Average::compute_cpu(const vector<bool>& add) {
 }
 
 void Average::compute_gpu(const vector<bool>& add) {
-  int count = inputs_[0]->size().count();
+  int count = inputs_[0]->shape().Count();
   caffe::caffe_gpu_add<DTYPE>(count, inputs_[0]->gpu_data(),
       inputs_[1]->gpu_data(), outputs_[0]->mutable_gpu_data());
   for (int i = 2; i < inputs_.size(); ++i) {
@@ -136,25 +136,25 @@ Scale::Scale(const vector<Tensor*>& inputs, const vector<Tensor*>& outputs,
     const param_tuple& args) : Operation(inputs, outputs) {
   std::tie(scale) = args;
   CHECK_EQ(inputs_.size(), 1);
-  CHECK_EQ(inputs_[0]->size(), outputs_[0]->size());
+  CHECK_EQ(inputs_[0]->shape(), outputs_[0]->shape());
 }
 
 void Scale::compute_cpu(const vector<bool>& add) {
   if (add[0] == false) {
-    caffe::caffe_cpu_scale<DTYPE>(inputs_[0]->size().count(), scale,
+    caffe::caffe_cpu_scale<DTYPE>(inputs_[0]->shape().Count(), scale,
         inputs_[0]->cpu_data(), outputs_[0]->mutable_cpu_data());
   } else {
-    caffe::caffe_axpy(inputs_[0]->size().count(), scale,
+    caffe::caffe_axpy(inputs_[0]->shape().Count(), scale,
         inputs_[0]->cpu_data(), outputs_[0]->mutable_cpu_data());
   }
 }
 
 void Scale::compute_gpu(const vector<bool>& add) {
   if (add[0] == false) {
-    caffe::caffe_gpu_scale<DTYPE>(inputs_[0]->size().count(), scale,
+    caffe::caffe_gpu_scale<DTYPE>(inputs_[0]->shape().Count(), scale,
         inputs_[0]->gpu_data(), outputs_[0]->mutable_gpu_data());
   } else {
-    caffe::caffe_gpu_axpy(inputs_[0]->size().count(), scale,
+    caffe::caffe_gpu_axpy(inputs_[0]->shape().Count(), scale,
         inputs_[0]->gpu_data(), outputs_[0]->mutable_gpu_data());
   }
 }

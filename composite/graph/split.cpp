@@ -9,14 +9,14 @@ void Split::setup() {
   CHECK(bottom_setup_);
   CHECK_EQ(bottom_.size(), 1);
   if (top_.size() != 0) {
-    dims = vector<int>(top_.size());
+    dims = vector<size_t>(top_.size());
     if (dim == DIM::NUM) {
       for (int i = 0; i < top_.size(); ++i) {
-        dims[i] = top_[i]->tensor()->size().num();
+        dims[i] = top_[i]->tensor()->shape()[0];
       }
     } else {
       for (int i = 0; i < top_.size(); ++i) {
-        dims[i] = top_[i]->tensor()->size().channels();
+        dims[i] = top_[i]->tensor()->shape()[1];
       }
     }
   } else {
@@ -27,33 +27,33 @@ void Split::setup() {
   }
   int sum = std::accumulate(dims.begin(), dims.end(), 0);
   if (dim == DIM::NUM) {
-    CHECK_EQ(sum, bottom_[0]->tensor()->size().num());
+    CHECK_EQ(sum, bottom_[0]->tensor()->shape()[0]);
   } else {
-    CHECK_EQ(sum, bottom_[0]->tensor()->size().channels());
+    CHECK_EQ(sum, bottom_[0]->tensor()->shape()[1]);
   }
 
   if (current_rank() == rank_) {
     // create sliced blobs from bottom
-    Size bottom_size = bottom_[0]->tensor()->size();
+    Shape bottom_shape = bottom_[0]->tensor()->shape();
     bottom_[0]->tensor()->mutable_data();
-    int off = 0;
+    size_t off = 0;
     if (dim == DIM::NUM) {
       for (int i = 0; i < dims.size(); ++i) {
-        Size tmp_size = { dims[i], bottom_size.channels(), bottom_size.height(),
-                          bottom_size.width() };
+        Shape tmp_shape = { dims[i], bottom_shape[1], bottom_shape[2],
+                          bottom_shape[3] };
         Offset tmp_offset = { off, 0, 0, 0 };
         off += dims[i];
         top_[i]->tensor()->slice_from(bottom_[0]->tensor(),
-            tmp_offset, tmp_size);
+            tmp_offset, tmp_shape);
       }
     } else {
       for (int i = 0; i < dims.size(); ++i) {
-        Size tmp_size = { bottom_size.num(), dims[i], bottom_size.height(),
-                          bottom_size.width() };
+        Shape tmp_shape = { bottom_shape[0], dims[i], bottom_shape[2],
+                          bottom_shape[3] };
         Offset tmp_offset = { 0, off, 0, 0 };
         off += dims[i];
         top_[i]->tensor()->slice_from(bottom_[0]->tensor(),
-            tmp_offset, tmp_size);
+            tmp_offset, tmp_shape);
       }
     }
   }

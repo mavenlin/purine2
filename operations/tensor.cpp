@@ -3,15 +3,15 @@
 
 namespace purine {
 
-Tensor::Tensor(int rank, int device, const Size& size, const Offset& offset,
-    const Stride& stride) : size_(size), offset_(offset), stride_(stride),
+Tensor::Tensor(int rank, int device, const Shape& shape, const Offset& offset,
+    const Stride& stride) : shape_(shape), offset_(offset), stride_(stride),
                             rank_(rank), device_(device) {
 }
 
-Tensor::Tensor(int rank, int device, const Size& size)
-    : size_(size), rank_(rank), device_(device) {
-  offset_ = Offset(0, 0, 0, 0);
-  stride_ = Stride(size);
+Tensor::Tensor(int rank, int device, const Shape& shape)
+    : shape_(shape), rank_(rank), device_(device) {
+  offset_ = Offset{0, 0, 0, 0};
+  stride_ = Stride(shape);
 }
 
 Tensor::~Tensor() {
@@ -19,28 +19,26 @@ Tensor::~Tensor() {
 }
 
 int Tensor::offset(const Offset& off, const Stride& stride) {
-  return off.noffset() * stride.nstride()
-      + off.coffset() * stride.cstride()
-      + off.hoffset() * stride.hstride()
-      + off.woffset() * stride.wstride();
+  return off[0] * stride[0] + off[1] * stride[1] + off[2] * stride[2]
+      + off[3] * stride[3];
 }
 
-void Tensor::alloc_mem(DTYPE** data, const Size& size, int rank, int device) {
-  CHECK_GT(size.count(), 0);
+void Tensor::alloc_mem(DTYPE** data, const Shape& shape, int rank, int device) {
+  CHECK_GT(shape.Count(), 0);
   CHECK_EQ(current_rank(), rank) << "Can't allocate memory on another machine";
   if (device < 0) {
 // #ifndef NDEBUG
-//     cudaHostAlloc(data, sizeof(DTYPE) * (1 + size.count()),
+//     cudaHostAlloc(data, sizeof(DTYPE) * (1 + shape.Count()),
 //         cudaHostAllocPortable);
 // #else
-    cudaHostAlloc(data, sizeof(DTYPE) * size.count(), cudaHostAllocPortable);
+    cudaHostAlloc(data, sizeof(DTYPE) * shape.Count(), cudaHostAllocPortable);
 // #endif
   } else {
     SWITCH_DEVICE(device);
 // #ifndef NDEBUG
-//     CUDA_CHECK(cudaMalloc(data, sizeof(DTYPE) * (1 + size.count())));
+//     CUDA_CHECK(cudaMalloc(data, sizeof(DTYPE) * (1 + shape.Count())));
 // #else
-    CUDA_CHECK(cudaMalloc(data, sizeof(DTYPE) * size.count()));
+    CUDA_CHECK(cudaMalloc(data, sizeof(DTYPE) * shape.Count()));
 // #endif
     SWITCH_BACK(device);
   }
@@ -66,13 +64,13 @@ void Tensor::swap_memory(Tensor* other) {
 //   other->past_the_end_ = past_the_end_;
 //   past_the_end_ = tmp;
 // #endif
-  CHECK_EQ(other->size_, size_);
+  CHECK_EQ(other->shape_, shape_);
   CHECK_EQ(other->stride_, stride_);
   CHECK_EQ(other->offset_, offset_);
   this->data_.swap(other->data_);
 }
 
-void Tensor::slice_from(Tensor* other, const Offset& off, const Size& size) {
+void Tensor::slice_from(Tensor* other, const Offset& off, const Shape& shape) {
 // #ifndef NDEBUG
 //   past_the_end_ = other->past_the_end_;
 // #endif
@@ -80,7 +78,7 @@ void Tensor::slice_from(Tensor* other, const Offset& off, const Size& size) {
   device_ = other->device_;
   stride_ = other->stride_;
   data_ = other->data_;
-  size_ = size;
+  shape_ = shape;
   offset_ += off;
 }
 
@@ -92,7 +90,7 @@ void Tensor::share_from(Tensor* other) {
   device_ = other->device_;
   stride_ = other->stride_;
   data_ = other->data_;
-  size_ = other->size_;
+  shape_ = other->shape_;
   offset_ = other->offset_;
 }
 
@@ -122,11 +120,11 @@ DTYPE* Tensor::mutable_data() {
   if (!data_) {
     CHECK(is_contiguous());
     DTYPE* ptr;
-    Tensor::alloc_mem(&ptr, size_, rank_, device_);
+    Tensor::alloc_mem(&ptr, shape_, rank_, device_);
     data_.reset(ptr, bind(Tensor::free_mem, std::placeholders::_1, rank_,
             device_));
 // #ifndef NDEBUG
-//     past_the_end_ = data_.get() + size_.count();
+//     past_the_end_ = data_.get() + shape_.Count();
 //     if (device_ < 0) {
 //       *past_the_end_ = 555.;
 //     } else {
@@ -154,7 +152,7 @@ DTYPE* Tensor::mutable_data() {
 }
 
 bool Tensor::is_contiguous() const {
-  return Stride(size_) == stride_;
+  return Stride(shape_) == stride_;
 }
 
 }
