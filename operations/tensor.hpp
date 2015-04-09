@@ -13,10 +13,10 @@ namespace purine {
 
 class Tensor {
 
-#ifndef NDEBUG // in the debug mode, enable past the end check
- protected:
-  DTYPE* past_the_end_;
-#endif
+// #ifndef NDEBUG // in the debug mode, enable past the end check
+//  protected:
+//   DTYPE* past_the_end_;
+// #endif
 
  public:
   explicit Tensor(int rank, int device, const Size& size,
