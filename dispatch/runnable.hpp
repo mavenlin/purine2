@@ -21,24 +21,23 @@ class Runnable : public Graph {
 
   class SinkCounter {
    private:
-    shared_ptr<condition_variable> cv_;
-    shared_ptr<mutex> mtx_;
-    shared_ptr<int> count_;
+    condition_variable cv_;
+    mutex mtx_;
+    int count_ = 0;
    public:
     SinkCounter() {
-      cv_.reset(new condition_variable);
-      mtx_.reset(new mutex);
-      count_.reset(new int(0));
     }
     int operator++ () {
-      std::unique_lock<std::mutex> lck(*mtx_);
-      ++(*count_);
-      cv_->notify_all();
+      std::unique_lock<std::mutex> lck(mtx_);
+      ++count_;
+      cv_.notify_all();
     }
     bool operator== (int num) {
-      std::unique_lock<std::mutex> lck(*mtx_);
-      cv_->wait(lck, [this, num]()->bool { return *count_ == num; });
-      *count_ = 0;
+      std::unique_lock<std::mutex> lck(mtx_);
+      while (count_ != num) {
+        cv_.wait(lck);
+      }
+      count_ = 0;
       return true;
     }
   };
